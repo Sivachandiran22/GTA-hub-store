@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/product-card';
-import { Search, SlidersHorizontal, Check, RefreshCw, X } from 'lucide-react';
+import { Search, SlidersHorizontal, Check, RefreshCw, X, Sparkles } from 'lucide-react';
 
 interface CategoryWithCount {
   id: string;
@@ -37,6 +37,7 @@ export default function ShopContent() {
   const activeSort = searchParams.get('sort') || 'newest';
   const activeMinPrice = searchParams.get('minPrice') || '';
   const activeMaxPrice = searchParams.get('maxPrice') || '';
+  const activeGame = searchParams.get('game') || 'GTA5';
 
   // Local component state
   const [products, setProducts] = useState<ProductType[]>([]);
@@ -61,6 +62,7 @@ export default function ShopContent() {
       setLoading(true);
       try {
         const queryParts = [];
+        if (activeGame && activeGame !== 'all') queryParts.push(`game=${activeGame}`);
         if (activeCategory && activeCategory !== 'all') queryParts.push(`category=${activeCategory}`);
         if (activeSearch) queryParts.push(`search=${encodeURIComponent(activeSearch)}`);
         if (activeType && activeType !== 'all') queryParts.push(`type=${activeType}`);
@@ -84,7 +86,7 @@ export default function ShopContent() {
     };
 
     fetchCatalog();
-  }, [activeCategory, activeSearch, activeType, activeSort, activeMinPrice, activeMaxPrice]);
+  }, [activeCategory, activeSearch, activeType, activeSort, activeMinPrice, activeMaxPrice, activeGame]);
 
   const updateQueries = (newParams: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -146,6 +148,36 @@ export default function ShopContent() {
             <option value="price-desc">Price: High to Low</option>
           </select>
         </div>
+      </div>
+
+      {/* Game Tabs */}
+      <div className="flex border-b border-white/5 mb-8 text-xs font-bold uppercase tracking-wider gap-6">
+        {[
+          { id: 'GTA5', label: 'GTA V Mods' },
+          { id: 'GTA6', label: 'GTA VI Mods' },
+          { id: '3D_MODEL', label: '3D Models' }
+        ].map((tab) => {
+          const isActive = activeGame === tab.id;
+          const isComingSoon = tab.id === 'GTA6';
+          return (
+            <button
+              key={tab.id}
+              onClick={() => updateQueries({ game: tab.id, category: 'all' })}
+              className={`pb-3 transition-colors duration-200 border-b-2 -mb-[2px] flex items-center space-x-1.5 ${
+                isActive
+                  ? 'border-brand-green text-brand-green font-black'
+                  : 'border-transparent text-gray-400 hover:text-white'
+              }`}
+            >
+              <span>{tab.label}</span>
+              {isComingSoon && (
+                <span className="rounded bg-brand-orange/20 border border-brand-orange/30 px-1.5 py-0.5 text-[8px] text-brand-orange">
+                  soon
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
@@ -268,7 +300,18 @@ export default function ShopContent() {
 
         {/* Catalog Grid */}
         <div className="lg:col-span-3">
-          {loading ? (
+          {activeGame === 'GTA6' ? (
+            <div className="rounded-lg border border-dashed border-brand-orange/20 py-24 text-center bg-brand-card/40 backdrop-blur-sm">
+              <Sparkles className="mx-auto h-12 w-12 text-brand-orange mb-4 animate-pulse" />
+              <h2 className="font-display text-lg font-black uppercase text-white tracking-widest">GTA VI Mods Catalog</h2>
+              <span className="mt-2 inline-block rounded bg-brand-orange/15 border border-brand-orange/30 px-3 py-1 text-[10px] font-bold text-brand-orange uppercase tracking-wider animate-bounce">
+                Coming Soon (Fall 2026)
+              </span>
+              <p className="text-xs text-gray-500 mt-3 max-w-sm mx-auto leading-relaxed">
+                Our development team is currently prepping high-fidelity vehicle shells, custom peds, and script packages compiled for the next chapter of Los Santos. Stay tuned!
+              </p>
+            </div>
+          ) : loading ? (
             /* Loading skeletons */
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (

@@ -18,6 +18,21 @@ import {
 export const revalidate = 60; // Revalidate page every 60 seconds
 
 export default async function HomePage() {
+  // Fetch dynamic database counts
+  const productsStats = await prisma.product.aggregate({
+    _sum: { downloadsCount: true },
+    _count: { id: true }
+  });
+  const totalDownloads = productsStats._sum.downloadsCount || 0;
+  const totalProducts = productsStats._count.id || 0;
+
+  // Fetch satisfied buyers count
+  const uniqueBuyers = await prisma.order.groupBy({
+    by: ['userId'],
+    where: { status: 'COMPLETED' }
+  });
+  const satisfiedBuyers = uniqueBuyers.length;
+
   // Fetch featured categories
   const categories = await prisma.category.findMany({
     take: 6,
@@ -62,27 +77,15 @@ export default async function HomePage() {
     }
   });
 
-  // Testimonials list
-  const testimonials = [
-    {
-      name: 'Trevor Phillips',
-      role: 'FiveM Server Owner',
-      review: 'GTA Hub has completely transformed my server. The MLO interiors are incredibly optimized, and my player base loves the custom vehicles!',
-      rating: 5,
-    },
-    {
-      name: 'Lamar Davis',
-      role: 'Lead Content Developer',
-      review: 'The HD Franklin redesign and peds models are top notch. Very clean rigging, absolutely no glitches in-game. 10/10 purchase!',
-      rating: 5,
-    },
-    {
-      name: 'Jimmy De Santa',
-      role: 'Hardcore Gamer',
-      review: 'The drift handling config is amazing, and it was completely free to download. Instant digital delivery worked flawlessly.',
-      rating: 5,
+  // Fetch actual reviews from database
+  const reviews = await prisma.review.findMany({
+    take: 6,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      user: { select: { fullName: true } },
+      product: { select: { title: true } }
     }
-  ];
+  });
 
   // FAQ List
   const faqs = [
@@ -127,7 +130,7 @@ export default async function HomePage() {
             Premium GTA V Mods Marketplace
           </p>
           <p className="mx-auto mt-2 max-w-xl text-xs sm:text-sm text-gray-500 leading-relaxed">
-            High-quality Peds, Props, MLOs, Buildings, Vehicles, Scripts and more. Fully optimized, ready for your FiveM server or single-player experience.
+            High-quality Peds, Props, MLOs, Buildings, Vehicles, Scripts and more. All assets are 100% compatible with both FiveM and Single Player (SP).
           </p>
 
           <div className="mt-10 flex flex-wrap justify-center gap-4">
@@ -157,9 +160,9 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            { label: 'Total Downloads', value: '150K+', icon: Zap, color: 'text-brand-green' },
-            { label: 'Active Mods', value: '500+', icon: Cpu, color: 'text-brand-green' },
-            { label: 'Satisfied Buyers', value: '12K+', icon: Users, color: 'text-brand-orange' },
+            { label: 'Total Downloads', value: totalDownloads.toString(), icon: Zap, color: 'text-brand-green' },
+            { label: 'Active Mods', value: totalProducts.toString(), icon: Cpu, color: 'text-brand-green' },
+            { label: 'Satisfied Buyers', value: satisfiedBuyers.toString(), icon: Users, color: 'text-brand-orange' },
             { label: 'Secure Delivery', value: '100%', icon: ShieldCheck, color: 'text-brand-orange' },
           ].map((stat, idx) => (
             <div key={idx} className="rounded-lg bg-brand-card/50 border border-white/5 p-6 text-center backdrop-blur-sm">
@@ -276,31 +279,38 @@ export default async function HomePage() {
       </section>
 
       {/* 7. Reviews Section */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="text-center space-y-2">
-          <h2 className="font-display text-xl md:text-2xl font-extrabold uppercase text-white tracking-wide">
-            Verified Customer Reviews
-          </h2>
-          <p className="text-xs text-gray-500">What gaming server administrators say about us</p>
-        </div>
+      {reviews.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="text-center space-y-2">
+            <h2 className="font-display text-xl md:text-2xl font-extrabold uppercase text-white tracking-wide">
+              Verified Customer Reviews
+            </h2>
+            <p className="text-xs text-gray-500">What gaming server administrators say about us</p>
+          </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {testimonials.map((t, idx) => (
-            <div key={idx} className="rounded-lg bg-brand-card/60 border border-white/5 p-6 space-y-4 backdrop-blur-sm">
-              <div className="flex items-center space-x-1">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-brand-orange text-sm">★</span>
-                ))}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {reviews.map((r) => (
+              <div key={r.id} className="rounded-lg bg-brand-card/60 border border-white/5 p-6 space-y-4 backdrop-blur-sm">
+                <div className="flex items-center space-x-1">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className={`text-sm ${i < r.rating ? 'text-brand-orange' : 'text-gray-700'}`}>★</span>
+                  ))}
+                </div>
+                <p className="text-xs italic text-gray-400 leading-relaxed">"{r.comment}"</p>
+                <div className="pt-2 border-t border-white/5 flex justify-between items-center text-[10px]">
+                  <div>
+                    <p className="font-display font-bold text-white uppercase">{r.user.fullName}</p>
+                    <p className="text-brand-green mt-0.5">{r.product.title}</p>
+                  </div>
+                  {r.isVerifiedPurchase && (
+                    <span className="text-brand-orange font-bold uppercase tracking-wider">Verified Buyer</span>
+                  )}
+                </div>
               </div>
-              <p className="text-xs italic text-gray-400 leading-relaxed">"{t.review}"</p>
-              <div className="pt-2 border-t border-white/5">
-                <p className="font-display text-xs font-bold text-white uppercase">{t.name}</p>
-                <p className="text-[10px] text-brand-green mt-0.5">{t.role}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 8. Frequently Asked Questions */}
       <section id="faq" className="mx-auto max-w-4xl px-4 sm:px-6 space-y-6">

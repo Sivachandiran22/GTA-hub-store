@@ -200,6 +200,38 @@ async function main() {
       installationGuide: 'Drop the .ini file into your main GTA V game directory and load it via the Reshade home overlay menu.',
       tags: ['Reshade', 'Graphics', 'Photorealistic', 'Preset'],
       zipUrl: '/assets/ultra_realism_graphics.zip'
+    },
+    {
+      title: 'Los Santos Skyline Shell (3D Model)',
+      slug: 'los-santos-skyline-shell-3d-model',
+      shortDescription: 'High poly raw FBX/OBJ 3D Model of the Los Santos Skyline (Not game ready)',
+      longDescription: 'This is a raw 3D mesh model of the Los Santos Skyline, including details of major buildings. Suitable for renders, architectural previews, or custom editing. Note: This is NOT a game-ready mod file, it is a raw 3D asset in FBX and OBJ format.',
+      price: 24.99,
+      categorySlug: 'buildings',
+      thumbnailUrl: '/images/products/3d-skyline.jpg',
+      version: '1.0.0',
+      downloadSize: '185 MB',
+      requirements: 'Blender, 3ds Max, or any 3D editing software',
+      installationGuide: '1. Import the FBX or OBJ file into your preferred 3D software.\n2. Apply textures from the textures folder.',
+      game: '3D_MODEL',
+      tags: ['Raw Asset', 'FBX', 'OBJ', 'Blender', '3D Model'],
+      zipUrl: '/assets/skyline_3d_model.zip'
+    },
+    {
+      title: 'Tactical Combat Knife (3D Model)',
+      slug: 'tactical-combat-knife-3d-model',
+      shortDescription: 'Raw high-poly combat knife 3D model with 4K textures (Not game ready)',
+      longDescription: 'A premium raw 3D asset of a tactical combat knife. Includes high-resolution 4K PBR textures (base color, roughness, metallic, normal). Perfect for 3D animators or game developers looking for weapon assets. Note: This is a raw model, NOT a GTA V weapon drop-in file.',
+      price: 5.99,
+      categorySlug: 'weapons',
+      thumbnailUrl: '/images/products/3d-knife.jpg',
+      version: '1.0.0',
+      downloadSize: '28 MB',
+      requirements: 'Blender, Substance Painter, or other 3D software',
+      installationGuide: '1. Open the Blender project file or import the OBJ/FBX file.\n2. Connect the PBR textures inside your shader editor.',
+      game: '3D_MODEL',
+      tags: ['Raw Asset', 'OBJ', 'FBX', 'PBR Textures', '3D Model'],
+      zipUrl: '/assets/knife_3d_model.zip'
     }
   ];
 
@@ -223,6 +255,7 @@ async function main() {
         installationGuide: prod.installationGuide,
         isFeatured: prod.isFeatured || false,
         isFree: prod.isFree || false,
+        game: prod.game || 'GTA5',
         zipUrl: prod.zipUrl,
         seoTitle: `${prod.title} - GTA Hub Store`,
         seoDescription: prod.shortDescription,

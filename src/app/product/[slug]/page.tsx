@@ -320,6 +320,10 @@ export default function ProductDetailPage({
               <span>FiveM Server build:</span>
               <span className="text-white font-bold">{product.compatibilityFivem}</span>
             </div>
+            <div className="flex justify-between border-t border-white/5 pt-1.5 mt-1.5 text-[10px]">
+              <span>Platform:</span>
+              <span className="text-brand-green font-bold uppercase">FiveM & Single Player (SP)</span>
+            </div>
           </div>
         </div>
       </div>

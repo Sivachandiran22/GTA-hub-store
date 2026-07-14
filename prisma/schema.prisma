@@ -61,6 +61,7 @@ model Product {
   seoDescription     String?
   seoKeywords        String?
   zipUrl             String
+  game               String           @default("GTA5")
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   gallery            ProductGallery[]

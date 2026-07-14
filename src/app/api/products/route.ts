@@ -10,9 +10,14 @@ export async function GET(request: Request) {
     const maxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined;
     const sort = searchParams.get('sort') || 'newest';
     const type = searchParams.get('type') || 'all'; // 'all', 'free', 'paid'
+    const game = searchParams.get('game');
     
     // Build where clause
     const where: any = { isVisible: true };
+    
+    if (game && game !== 'all') {
+      where.game = game;
+    }
     
     if (category && category !== 'all') {
       where.category = { slug: category };
@@ -107,6 +112,7 @@ export async function POST(request: Request) {
       isFeatured,
       isFree,
       zipUrl,
+      game
     } = body;
 
     if (!title || !slug || !shortDescription || !longDescription || price === undefined || !categoryId || !thumbnailUrl || !zipUrl) {
@@ -129,6 +135,7 @@ export async function POST(request: Request) {
         installationGuide,
         isFeatured: !!isFeatured,
         isFree: !!isFree,
+        game: game || 'GTA5',
         zipUrl,
         seoTitle: `${title} - GTA Hub Store`,
         seoDescription: shortDescription,
