@@ -74,6 +74,7 @@ export default function AdminDashboard() {
   const [formZip, setFormZip] = useState('/assets/new_product.zip');
   const [formIsFeatured, setFormIsFeatured] = useState(false);
   const [formIsFree, setFormIsFree] = useState(false);
+  const [formGame, setFormGame] = useState('GTA5');
 
   const [formSuccess, setFormSuccess] = useState(false);
   const [formError, setFormError] = useState('');
@@ -154,6 +155,7 @@ export default function AdminDashboard() {
           installationGuide: formGuide,
           isFeatured: formIsFeatured,
           isFree: formIsFree,
+          game: formGame,
           zipUrl: formZip
         })
       });
@@ -384,8 +386,8 @@ export default function AdminDashboard() {
                   />
                 </div>
 
-                {/* Price and Sale Price */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Price, Category, and Segment */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold uppercase text-gray-400">Price ($ USD)</label>
                     <input
@@ -424,6 +426,19 @@ export default function AdminDashboard() {
                           {c.name}
                         </option>
                       ))}
+                    </select>
+                  </div>
+
+                  {/* Game Segment Dropdown */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase text-gray-400">Game Segment</label>
+                    <select
+                      value={formGame}
+                      onChange={(e) => setFormGame(e.target.value)}
+                      className="w-full rounded bg-black/60 border border-white/10 px-3 py-2.5 text-white focus:border-brand-green focus:outline-none"
+                    >
+                      <option value="GTA5">GTA V Mods</option>
+                      <option value="3D_MODEL">3D Models</option>
                     </select>
                   </div>
                 </div>
