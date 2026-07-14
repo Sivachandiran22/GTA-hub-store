@@ -4,11 +4,11 @@ import LayoutClient from "@/components/layout-client";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
-  title: "GTA Hub Store - Premium GTA V Mods & Marketplace",
-  description: "High-quality GTA V Peds, Props, MLOs, Buildings, Vehicles, Scripts, and Custom Game Assets.",
+  title: "GTA Hub Store - Premium GTA Mods & Marketplace",
+  description: "High-quality GTA Peds, Props, MLOs, Buildings, Vehicles, Scripts, and Custom Game Assets.",
   openGraph: {
-    title: "GTA Hub Store - Premium GTA V Mods",
-    description: "Premium GTA V digital marketplace with stunning visuals, optimized FiveM scripts, peds, maps, and buildings.",
+    title: "GTA Hub Store - Premium GTA Mods",
+    description: "Premium GTA digital marketplace with stunning visuals, optimized FiveM scripts, peds, maps, and buildings.",
     type: "website",
   }
 };

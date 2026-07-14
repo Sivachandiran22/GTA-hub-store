@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { CartProvider, useCart } from '@/context/CartContext';
 import CursorGlow from '@/components/visual/cursor-glow';
@@ -26,6 +26,7 @@ import {
 function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const { cartCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -40,9 +41,21 @@ function Navigation() {
     }
   };
 
+  const isLinkActive = (href: string) => {
+    if (href === '/') return pathname === '/';
+    if (href.includes('?')) {
+      const [path, query] = href.split('?');
+      const params = new URLSearchParams(query);
+      const gameParam = params.get('game');
+      return pathname === path && searchParams.get('game') === gameParam;
+    }
+    return pathname === href;
+  };
+
   const navLinks = [
     { name: 'Home', href: '/' },
-    { name: 'Shop', href: '/shop' },
+    { name: 'GTA 5', href: '/shop?game=GTA5' },
+    { name: 'GTA 6', href: '/shop?game=GTA6' },
     { name: 'Blog', href: '/blog' },
     { name: 'Support', href: '/contact' },
   ];
@@ -62,7 +75,7 @@ function Navigation() {
         {/* Desktop Nav links */}
         <nav className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => {
-            const isActive = pathname === link.href;
+            const isActive = isLinkActive(link.href);
             return (
               <Link
                 key={link.name}
@@ -272,7 +285,7 @@ function Footer() {
               </span>
             </Link>
             <p className="text-xs text-gray-400 leading-relaxed">
-              Premium marketplace for GTA V modifications, high fidelity character skins, customized props, FiveM scripts, and optimized inner maps. Elevate your server to AAA standard.
+              Premium marketplace for GTA modifications, high fidelity character skins, customized props, FiveM scripts, and optimized inner maps. Elevate your server to AAA standard.
             </p>
             {/* Social media connections */}
             <div className="flex space-x-3 pt-2">
@@ -387,7 +400,9 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
         
         {/* Page Structure */}
         <div className="relative z-10 flex min-h-screen flex-col bg-brand-bg text-gray-200 bg-grid-pattern">
-          <Navigation />
+          <React.Suspense fallback={<div className="h-16 border-b border-white/5 bg-brand-bg/70" />}>
+            <Navigation />
+          </React.Suspense>
           <main className="flex-grow">
             {children}
           </main>

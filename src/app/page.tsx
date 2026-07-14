@@ -120,14 +120,14 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8 relative z-10">
           <div className="inline-flex items-center space-x-2 rounded-full bg-brand-card/60 border border-white/5 px-4 py-1.5 mb-6 text-xs text-brand-green font-medium">
             <Sparkles className="h-4 w-4" />
-            <span>Next-Gen GTA V Marketplace</span>
+            <span>Next-Gen GTA Marketplace</span>
           </div>
 
           <h1 className="font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-7xl uppercase">
             GTA <span className="text-brand-green neon-glow-green">HUB</span> STORE
           </h1>
           <p className="mx-auto mt-4 max-w-2xl font-display text-lg md:text-xl font-medium tracking-wide text-gray-400">
-            Premium GTA V Mods Marketplace
+            Premium GTA Mods Marketplace
           </p>
           <p className="mx-auto mt-2 max-w-xl text-xs sm:text-sm text-gray-500 leading-relaxed">
             High-quality Peds, Props, MLOs, Buildings, Vehicles, Scripts and more. All assets are 100% compatible with both FiveM and Single Player (SP).
@@ -156,34 +156,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2. Stats Section */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {[
-            { label: 'Total Downloads', value: totalDownloads.toString(), icon: Zap, color: 'text-brand-green' },
-            { label: 'Active Mods', value: totalProducts.toString(), icon: Cpu, color: 'text-brand-green' },
-            { label: 'Satisfied Buyers', value: satisfiedBuyers.toString(), icon: Users, color: 'text-brand-orange' },
-            { label: 'Secure Delivery', value: '100%', icon: ShieldCheck, color: 'text-brand-orange' },
-          ].map((stat, idx) => (
-            <div key={idx} className="rounded-lg bg-brand-card/50 border border-white/5 p-6 text-center backdrop-blur-sm">
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/5 mb-3">
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
-              </div>
-              <p className="font-display text-2xl font-black text-white">{stat.value}</p>
-              <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 3. Featured Categories */}
+      {/* 2. Featured Categories */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-xl md:text-2xl font-extrabold uppercase text-white tracking-wide">
               Featured Categories
             </h2>
-            <p className="text-xs text-gray-500 mt-1">Explore specialized digital assets for GTA V</p>
+            <p className="text-xs text-gray-500 mt-1">Explore specialized digital assets for GTA</p>
           </div>
           <Link href="/shop" className="text-xs font-bold text-brand-green hover:underline flex items-center space-x-1">
             <span>View All</span>
@@ -210,7 +190,45 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 4. Flash Sales / Sale Items */}
+      {/* 3. Featured Products */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-xl md:text-2xl font-extrabold uppercase text-white tracking-wide">
+              Featured Products
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">Handpicked top performance mods</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {featuredProducts.map((p) => (
+            <ProductCard key={p.id} product={p as any} />
+          ))}
+        </div>
+      </section>
+
+      {/* 4. Stats Section */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {[
+            { label: 'Total Downloads', value: totalDownloads.toString(), icon: Zap, color: 'text-brand-green' },
+            { label: 'Active Mods', value: totalProducts.toString(), icon: Cpu, color: 'text-brand-green' },
+            { label: 'Satisfied Buyers', value: satisfiedBuyers.toString(), icon: Users, color: 'text-brand-orange' },
+            { label: 'Secure Delivery', value: '100%', icon: ShieldCheck, color: 'text-brand-orange' },
+          ].map((stat, idx) => (
+            <div key={idx} className="rounded-lg bg-brand-card/50 border border-white/5 p-6 text-center backdrop-blur-sm">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/5 mb-3">
+                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+              </div>
+              <p className="font-display text-2xl font-black text-white">{stat.value}</p>
+              <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 5. Flash Sales / Sale Items */}
       {saleProducts.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex items-center justify-between">
@@ -233,24 +251,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      {/* 5. Featured Products */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-display text-xl md:text-2xl font-extrabold uppercase text-white tracking-wide">
-              Featured Products
-            </h2>
-            <p className="text-xs text-gray-500 mt-1">Handpicked top performance mods</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {featuredProducts.map((p) => (
-            <ProductCard key={p.id} product={p as any} />
-          ))}
-        </div>
-      </section>
 
       {/* 6. Free Downloads Banner */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
