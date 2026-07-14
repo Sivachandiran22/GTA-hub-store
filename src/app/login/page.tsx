@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Gamepad2, Mail, Lock, Sparkles, ArrowRight } from 'lucide-react';
+import { Gamepad2, Mail, Lock, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,11 +31,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleMockGoogleLogin = () => {
-    setEmail('franklin@gmail.com');
-    setPassword('customer123');
-  };
-
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4 py-12 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background gradients */}
@@ -52,7 +47,7 @@ export default function LoginPage() {
             </span>
           </Link>
           <h2 className="font-display text-lg font-bold text-white uppercase tracking-wide">
-            Welcome Back Operator
+            Welcome Back
           </h2>
           <p className="text-xs text-gray-500">Sign in to access your digital downloads and dashboard</p>
         </div>
@@ -106,23 +101,6 @@ export default function LoginPage() {
             )}
           </button>
         </form>
-
-        {/* Separator */}
-        <div className="relative flex items-center justify-center border-t border-white/5 py-2 text-xs">
-          <span className="absolute bg-brand-card px-3 text-[10px] uppercase font-bold text-gray-500 tracking-widest">
-            Quick Fill Testing
-          </span>
-        </div>
-
-        {/* Testing Fill Link */}
-        <button
-          onClick={handleMockGoogleLogin}
-          type="button"
-          className="w-full rounded border border-white/10 bg-transparent py-2.5 text-xs font-bold text-gray-300 hover:bg-white/5 transition-all flex items-center justify-center space-x-2"
-        >
-          <Sparkles className="h-3.5 w-3.5 text-brand-orange" />
-          <span>Autofill Customer (Franklin)</span>
-        </button>
 
         {/* Redirect links */}
         <p className="text-center text-xs text-gray-400">
