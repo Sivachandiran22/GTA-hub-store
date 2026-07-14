@@ -1,0 +1,348 @@
+import React from 'react';
+import Link from 'next/link';
+import prisma from '@/lib/db';
+import ProductCard from '@/components/product-card';
+import { 
+  ArrowRight, 
+  Sparkles, 
+  TrendingUp, 
+  Gift, 
+  FileText, 
+  HelpCircle, 
+  Cpu, 
+  ShieldCheck, 
+  Zap, 
+  Users 
+} from 'lucide-react';
+
+export const revalidate = 60; // Revalidate page every 60 seconds
+
+export default async function HomePage() {
+  // Fetch featured categories
+  const categories = await prisma.category.findMany({
+    take: 6,
+    include: {
+      _count: {
+        select: { products: true }
+      }
+    }
+  });
+
+  // Fetch featured products
+  const featuredProducts = await prisma.product.findMany({
+    where: { isFeatured: true, isVisible: true },
+    take: 4,
+    include: {
+      category: {
+        select: { name: true, slug: true }
+      }
+    }
+  });
+
+  // Fetch latest products
+  const latestProducts = await prisma.product.findMany({
+    where: { isVisible: true },
+    orderBy: { createdAt: 'desc' },
+    take: 4,
+    include: {
+      category: {
+        select: { name: true, slug: true }
+      }
+    }
+  });
+
+  // Fetch flash sale products
+  const saleProducts = await prisma.product.findMany({
+    where: { salePrice: { not: null }, isVisible: true },
+    take: 4,
+    include: {
+      category: {
+        select: { name: true, slug: true }
+      }
+    }
+  });
+
+  // Testimonials list
+  const testimonials = [
+    {
+      name: 'Trevor Phillips',
+      role: 'FiveM Server Owner',
+      review: 'GTA Hub has completely transformed my server. The MLO interiors are incredibly optimized, and my player base loves the custom vehicles!',
+      rating: 5,
+    },
+    {
+      name: 'Lamar Davis',
+      role: 'Lead Content Developer',
+      review: 'The HD Franklin redesign and peds models are top notch. Very clean rigging, absolutely no glitches in-game. 10/10 purchase!',
+      rating: 5,
+    },
+    {
+      name: 'Jimmy De Santa',
+      role: 'Hardcore Gamer',
+      review: 'The drift handling config is amazing, and it was completely free to download. Instant digital delivery worked flawlessly.',
+      rating: 5,
+    }
+  ];
+
+  // FAQ List
+  const faqs = [
+    {
+      q: 'How do I download my purchased files?',
+      a: 'After completing checkout, you will receive an instant redirect to your dashboard. Under the "Downloads" tab, you will find expirable links to fetch your ZIP files.'
+    },
+    {
+      q: 'Are the scripts compatible with QBCore and ESX?',
+      a: 'Yes, most of our FiveM scripts are written to support both QBCore and ESX frameworks automatically. Check the "Requirements" tab on each product page.'
+    },
+    {
+      q: 'Can I get a refund if the mod does not work?',
+      a: 'Since we sell digital assets, all sales are final. However, we offer 24/7 support via email and Discord to help you troubleshoot installation and get the mod running.'
+    },
+    {
+      q: 'Is it legal to use these custom mods?',
+      a: 'Our modifications are custom creations and do not contain copyrighted assets from Rockstar Games or Take-Two. They are safe to use in single-player or private FiveM servers.'
+    }
+  ];
+
+  return (
+    <div className="space-y-20 pb-20">
+      {/* 1. Hero Section */}
+      <section className="relative overflow-hidden pt-24 pb-20 md:pt-32 md:pb-28">
+        <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(0,255,135,0.08),transparent)]" />
+        
+        {/* Glow dots floating ambient banner */}
+        <div className="absolute right-1/4 top-1/3 h-72 w-72 rounded-full bg-brand-green/5 blur-3xl animate-pulse-glow" />
+        <div className="absolute left-1/4 bottom-1/3 h-64 w-64 rounded-full bg-brand-orange/5 blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
+
+        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8 relative z-10">
+          <div className="inline-flex items-center space-x-2 rounded-full bg-brand-card/60 border border-white/5 px-4 py-1.5 mb-6 text-xs text-brand-green font-medium">
+            <Sparkles className="h-4 w-4" />
+            <span>Next-Gen GTA V Marketplace</span>
+          </div>
+
+          <h1 className="font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-7xl uppercase">
+            GTA <span className="text-brand-green neon-glow-green">HUB</span> STORE
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl font-display text-lg md:text-xl font-medium tracking-wide text-gray-400">
+            Premium GTA V Mods Marketplace
+          </p>
+          <p className="mx-auto mt-2 max-w-xl text-xs sm:text-sm text-gray-500 leading-relaxed">
+            High-quality Peds, Props, MLOs, Buildings, Vehicles, Scripts and more. Fully optimized, ready for your FiveM server or single-player experience.
+          </p>
+
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <Link
+              href="/shop"
+              className="rounded bg-brand-green px-8 py-3.5 text-xs font-black uppercase text-black tracking-wider shadow-lg shadow-brand-green/20 hover:bg-opacity-90 hover:scale-102 transition-all"
+            >
+              Browse Mods
+            </Link>
+            <Link
+              href="/shop?sort=newest"
+              className="rounded bg-brand-card border border-white/10 px-8 py-3.5 text-xs font-black uppercase text-white tracking-wider hover:bg-white/5 transition-colors"
+            >
+              Latest Uploads
+            </Link>
+            <Link
+              href="/shop?type=free"
+              className="rounded bg-brand-orange/10 border border-brand-orange/20 px-8 py-3.5 text-xs font-black uppercase text-brand-orange tracking-wider hover:bg-brand-orange/20 transition-all"
+            >
+              Free Downloads
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Stats Section */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {[
+            { label: 'Total Downloads', value: '150K+', icon: Zap, color: 'text-brand-green' },
+            { label: 'Active Mods', value: '500+', icon: Cpu, color: 'text-brand-green' },
+            { label: 'Satisfied Buyers', value: '12K+', icon: Users, color: 'text-brand-orange' },
+            { label: 'Secure Delivery', value: '100%', icon: ShieldCheck, color: 'text-brand-orange' },
+          ].map((stat, idx) => (
+            <div key={idx} className="rounded-lg bg-brand-card/50 border border-white/5 p-6 text-center backdrop-blur-sm">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/5 mb-3">
+                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+              </div>
+              <p className="font-display text-2xl font-black text-white">{stat.value}</p>
+              <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 3. Featured Categories */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-xl md:text-2xl font-extrabold uppercase text-white tracking-wide">
+              Featured Categories
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">Explore specialized digital assets for GTA V</p>
+          </div>
+          <Link href="/shop" className="text-xs font-bold text-brand-green hover:underline flex items-center space-x-1">
+            <span>View All</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          {categories.map((cat) => (
+            <Link
+              key={cat.id}
+              href={`/shop?category=${cat.slug}`}
+              className="group rounded-lg bg-brand-card/50 border border-white/5 p-4 text-center hover:border-brand-green/20 hover:bg-brand-card transition-all"
+            >
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded bg-white/5 group-hover:bg-brand-green/10 transition-colors mb-3 text-brand-green text-sm font-bold font-display uppercase">
+                {cat.slug.slice(0, 3)}
+              </div>
+              <h3 className="font-display font-bold text-xs text-white group-hover:text-brand-green transition-colors">
+                {cat.name}
+              </h3>
+              <p className="text-[10px] text-gray-500 mt-1">{cat._count?.products || 0} Mods</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. Flash Sales / Sale Items */}
+      {saleProducts.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="flex h-2 w-2 rounded-full bg-brand-orange animate-ping" />
+              <div>
+                <h2 className="font-display text-xl md:text-2xl font-extrabold uppercase text-white tracking-wide flex items-center space-x-2">
+                  <span>Flash Sales</span>
+                  <span className="text-xs font-sans tracking-normal bg-brand-orange px-2 py-0.5 rounded text-white lowercase">limited offers</span>
+                </h2>
+                <p className="text-xs text-gray-500 mt-1">Huge discounts on premium assets</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {saleProducts.map((p) => (
+              <ProductCard key={p.id} product={p as any} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 5. Featured Products */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-xl md:text-2xl font-extrabold uppercase text-white tracking-wide">
+              Featured Products
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">Handpicked top performance mods</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {featuredProducts.map((p) => (
+            <ProductCard key={p.id} product={p as any} />
+          ))}
+        </div>
+      </section>
+
+      {/* 6. Free Downloads Banner */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="relative rounded-2xl bg-gradient-to-r from-brand-card to-[#1a1a24] border border-white/5 overflow-hidden p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-brand-green/5 blur-3xl" />
+          <div className="space-y-3 max-w-xl text-center md:text-left">
+            <div className="inline-flex items-center space-x-1.5 rounded bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 text-[10px] font-bold text-blue-400 uppercase tracking-wider">
+              <Gift className="h-3.5 w-3.5" />
+              <span>Zero Cost</span>
+            </div>
+            <h2 className="font-display text-2xl md:text-3xl font-black text-white uppercase">
+              Free Downloads Library
+            </h2>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Test out our asset quality before committing! Browse our collection of free vehicles, handling configs, clothing items, and props to optimize your game.
+            </p>
+          </div>
+          <Link
+            href="/shop?type=free"
+            className="rounded bg-brand-orange px-6 py-3 text-xs font-black uppercase text-white tracking-wider shadow-md hover:bg-opacity-95 hover:scale-102 transition-all flex items-center space-x-1"
+          >
+            <span>Access Library</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </section>
+
+      {/* 7. Reviews Section */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="text-center space-y-2">
+          <h2 className="font-display text-xl md:text-2xl font-extrabold uppercase text-white tracking-wide">
+            Verified Customer Reviews
+          </h2>
+          <p className="text-xs text-gray-500">What gaming server administrators say about us</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {testimonials.map((t, idx) => (
+            <div key={idx} className="rounded-lg bg-brand-card/60 border border-white/5 p-6 space-y-4 backdrop-blur-sm">
+              <div className="flex items-center space-x-1">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-brand-orange text-sm">★</span>
+                ))}
+              </div>
+              <p className="text-xs italic text-gray-400 leading-relaxed">"{t.review}"</p>
+              <div className="pt-2 border-t border-white/5">
+                <p className="font-display text-xs font-bold text-white uppercase">{t.name}</p>
+                <p className="text-[10px] text-brand-green mt-0.5">{t.role}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 8. Frequently Asked Questions */}
+      <section id="faq" className="mx-auto max-w-4xl px-4 sm:px-6 space-y-6">
+        <div className="text-center space-y-2">
+          <h2 className="font-display text-xl md:text-2xl font-extrabold uppercase text-white tracking-wide flex items-center justify-center space-x-2">
+            <HelpCircle className="h-5 w-5 text-brand-green" />
+            <span>Frequently Asked Questions</span>
+          </h2>
+          <p className="text-xs text-gray-500">Quick answers about payments, deliveries, and licensing</p>
+        </div>
+
+        <div className="space-y-4">
+          {faqs.map((faq, idx) => (
+            <details
+              key={idx}
+              className="group rounded-lg bg-brand-card/40 border border-white/5 p-4 transition-all duration-200 open:border-brand-green/20 open:bg-brand-card/80"
+            >
+              <summary className="flex cursor-pointer items-center justify-between text-xs font-bold text-white uppercase select-none list-none">
+                <span>{faq.q}</span>
+                <span className="transition-transform duration-200 group-open:rotate-180 text-brand-green">
+                  ▼
+                </span>
+              </summary>
+              <p className="mt-3 text-xs text-gray-400 leading-relaxed border-t border-white/5 pt-3">
+                {faq.a}
+              </p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* 9. Blog preview link */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 text-center">
+        <div className="rounded-lg bg-brand-card/20 border border-white/5 p-6 inline-flex items-center space-x-4 text-xs">
+          <FileText className="h-4 w-4 text-brand-green" />
+          <span className="text-gray-400">Need help setting up vehicles or FiveM resources?</span>
+          <Link href="/blog" className="text-brand-green font-bold hover:underline flex items-center space-x-1">
+            <span>Read installation tutorials</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}

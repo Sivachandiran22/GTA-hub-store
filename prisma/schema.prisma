@@ -1,0 +1,168 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                String          @id @default(uuid())
+  email             String          @unique
+  passwordHash      String
+  fullName          String
+  role              String          @default("CUSTOMER") // "CUSTOMER" or "ADMIN"
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  googleId          String?
+  twoFactorEnabled  Boolean         @default(false)
+  twoFactorSecret   String?
+  orders            Order[]
+  reviews           Review[]
+  downloadTokens    DownloadToken[]
+  supportTickets    SupportTicket[]
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  products    Product[]
+}
+
+model Product {
+  id                 String           @id @default(uuid())
+  title              String
+  slug               String           @unique
+  shortDescription   String
+  longDescription    String
+  price              Float
+  salePrice          Float?
+  categoryId         String
+  category           Category         @relation(fields: [categoryId], references: [id])
+  thumbnailUrl       String
+  version            String           @default("1.0.0")
+  downloadSize       String           @default("0MB")
+  requirements       String?
+  installationGuide  String?
+  compatibilityGta   String           @default("v1.0.2802")
+  compatibilityFivem String           @default("Build 2699")
+  author             String           @default("GTA Hub Team")
+  rating             Float            @default(5.0)
+  downloadsCount     Int              @default(0)
+  isFeatured         Boolean          @default(false)
+  isFree             Boolean          @default(false)
+  isVisible          Boolean          @default(true)
+  seoTitle           String?
+  seoDescription     String?
+  seoKeywords        String?
+  zipUrl             String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  gallery            ProductGallery[]
+  tags               ProductTag[]
+  orderItems         OrderItem[]
+  reviews            Review[]
+  downloadTokens     DownloadToken[]
+}
+
+model ProductGallery {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  mediaType String   @default("IMAGE") // "IMAGE" or "VIDEO"
+}
+
+model ProductTag {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tagName   String
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  orderNumber     String      @unique
+  totalAmount     Float
+  discountAmount  Float       @default(0)
+  taxAmount       Float       @default(0)
+  netAmount       Float
+  status          String      @default("PENDING") // "PENDING", "COMPLETED", "FAILED"
+  paymentMethod   String      @default("STRIPE") // "STRIPE", "PAYPAL", "RAZORPAY", "FREE"
+  paymentIntentId String?
+  createdAt       DateTime    @default(now())
+  orderItems      OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  price     Float
+}
+
+model DownloadToken {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id])
+  token          String   @unique
+  expiresAt      DateTime
+  downloadsCount Int      @default(0)
+  createdAt      DateTime @default(now())
+}
+
+model Review {
+  id                 String   @id @default(uuid())
+  productId          String
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  rating             Int      @default(5)
+  comment            String
+  isVerifiedPurchase Boolean  @default(false)
+  adminReply         String?
+  helpfulVotes       Int      @default(0)
+  createdAt          DateTime @default(now())
+}
+
+model BlogPost {
+  id          String    @id @default(uuid())
+  title       String
+  slug        String    @unique
+  content     String
+  author      String    @default("GTA Hub Admin")
+  category    String    @default("News") // "Tutorials", "Guides", "Updates", "Announcements"
+  status      String    @default("PUBLISHED") // "DRAFT", "PUBLISHED"
+  imageUrl    String?
+  publishedAt DateTime? @default(now())
+  createdAt   DateTime  @default(now())
+}
+
+model Coupon {
+  id                 String    @id @default(uuid())
+  code               String    @unique
+  discountPercentage Float
+  active             Boolean   @default(true)
+  expiresAt          DateTime?
+}
+
+model SupportTicket {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  subject   String
+  message   String
+  status    String   @default("OPEN") // "OPEN", "RESOLVED", "CLOSED"
+  createdAt DateTime @default(now())
+}
