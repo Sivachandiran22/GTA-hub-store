@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import LayoutClient from "@/components/layout-client";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "GTA Hub Store - Premium GTA V Mods & Marketplace",
@@ -23,6 +24,7 @@ export default function RootLayout({
         <LayoutClient>
           {children}
         </LayoutClient>
+        <Analytics />
       </body>
     </html>
   );
