@@ -450,6 +450,25 @@ export default function AdminDashboard() {
     formZip, formIsFeatured, formIsFree, formGame
   ]);
 
+  // Auto-fetch file size when the ZIP URL is updated (e.g. pasted Google Drive / Dropbox link)
+  useEffect(() => {
+    if (!formZip) return;
+    if (formZip.startsWith('http://') || formZip.startsWith('https://')) {
+      const fetchSize = async () => {
+        try {
+          const res = await fetch(`/api/admin/fetch-size?url=${encodeURIComponent(formZip)}`);
+          const data = await res.json();
+          if (data.size) {
+            setFormSize(data.size);
+          }
+        } catch (err) {
+          console.error('Failed to auto-fetch file size', err);
+        }
+      };
+      fetchSize();
+    }
+  }, [formZip]);
+
   const handleClearDraft = () => {
     if (window.confirm('Are you sure you want to discard your draft and start over?')) {
       localStorage.removeItem('gta_hub_admin_draft');
@@ -980,10 +999,10 @@ export default function AdminDashboard() {
                           <td className="p-4">
                             <button
                               onClick={() => handleToggleFeatured(p.slug, p.isFeatured)}
-                              className={`rounded px-2.5 py-1 text-[10px] font-bold uppercase transition-all ${
+                              className={`rounded px-2.5 py-1 text-[10px] font-bold uppercase transition-all duration-200 ${
                                 p.isFeatured
-                                  ? 'bg-brand-orange/15 border border-brand-orange/30 text-brand-orange'
-                                  : 'bg-white/5 text-gray-500 hover:text-white'
+                                  ? 'bg-brand-orange/15 border border-brand-orange/30 text-brand-orange hover:bg-brand-orange hover:text-white hover:scale-105 hover:shadow-md hover:shadow-brand-orange/20'
+                                  : 'bg-white/5 border border-transparent text-gray-500 hover:bg-white/10 hover:text-white hover:scale-105'
                               }`}
                             >
                               {p.isFeatured ? 'Featured' : 'Standard'}
@@ -992,10 +1011,10 @@ export default function AdminDashboard() {
                           <td className="p-4">
                             <button
                               onClick={() => handleToggleVisibility(p.slug, p.isVisible)}
-                              className={`rounded px-2.5 py-1 text-[10px] font-bold uppercase transition-all ${
+                              className={`rounded px-2.5 py-1 text-[10px] font-bold uppercase transition-all duration-200 ${
                                 p.isVisible
-                                  ? 'bg-brand-green/15 border border-brand-green/30 text-brand-green'
-                                  : 'bg-red-500/10 border border-red-500/25 text-red-400'
+                                  ? 'bg-brand-green/15 border border-brand-green/30 text-brand-green hover:bg-brand-green hover:text-black hover:scale-105 hover:shadow-md hover:shadow-brand-green/20'
+                                  : 'bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500 hover:text-white hover:scale-105 hover:shadow-md hover:shadow-red-500/20'
                               }`}
                             >
                               {p.isVisible ? 'Visible' : 'Hidden'}
@@ -1004,7 +1023,7 @@ export default function AdminDashboard() {
                           <td className="p-4 text-right">
                             <button
                               onClick={() => handleDeleteProduct(p.slug)}
-                              className="rounded bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-[10px] font-bold uppercase text-red-400 hover:bg-red-500/20 transition-all"
+                              className="rounded bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-[10px] font-bold uppercase text-red-400 hover:bg-red-600 hover:text-white hover:border-transparent hover:scale-105 hover:shadow-md hover:shadow-red-500/20 transition-all duration-200"
                             >
                               Delete
                             </button>

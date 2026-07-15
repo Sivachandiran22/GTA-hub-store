@@ -213,35 +213,37 @@ export default function ShopContent() {
           </form>
 
           {/* Category Filter */}
-          <div className="rounded-lg bg-brand-card/30 border border-white/5 p-4 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Categories</h3>
-            <div className="flex flex-col space-y-1.5 text-xs">
-              <button
-                onClick={() => updateQueries({ category: 'all' })}
-                className={`text-left px-2 py-1.5 rounded transition-all flex items-center justify-between ${
-                  activeCategory === 'all'
-                    ? 'bg-brand-green/10 text-brand-green font-bold border-l-2 border-brand-green'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <span>All Assets</span>
-              </button>
-              {categories.map((cat) => (
+          {activeGame !== '3D_MODEL' && (
+            <div className="rounded-lg bg-brand-card/30 border border-white/5 p-4 space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Categories</h3>
+              <div className="flex flex-col space-y-1.5 text-xs">
                 <button
-                  key={cat.id}
-                  onClick={() => updateQueries({ category: cat.slug })}
+                  onClick={() => updateQueries({ category: 'all' })}
                   className={`text-left px-2 py-1.5 rounded transition-all flex items-center justify-between ${
-                    activeCategory === cat.slug
+                    activeCategory === 'all'
                       ? 'bg-brand-green/10 text-brand-green font-bold border-l-2 border-brand-green'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  <span>{cat.name}</span>
-                  <span className="text-[10px] text-gray-500">({cat._count.products})</span>
+                  <span>All Assets</span>
                 </button>
-              ))}
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => updateQueries({ category: cat.slug })}
+                    className={`text-left px-2 py-1.5 rounded transition-all flex items-center justify-between ${
+                      activeCategory === cat.slug
+                        ? 'bg-brand-green/10 text-brand-green font-bold border-l-2 border-brand-green'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <span>{cat.name}</span>
+                    <span className="text-[10px] text-gray-500">({cat._count.products})</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Type Filter */}
           <div className="rounded-lg bg-brand-card/30 border border-white/5 p-4 space-y-3">

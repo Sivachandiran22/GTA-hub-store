@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { CreditCard, Tag, ShieldCheck, Gamepad2, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import FormattedPrice from '@/components/formatted-price';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -142,7 +143,7 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between">
               <span>Paid Amount:</span>
-              <span className="text-brand-green font-bold">${successDetails.netAmount.toFixed(2)}</span>
+              <span className="text-brand-green font-bold"><FormattedPrice price={successDetails.netAmount} /></span>
             </div>
             <div className="flex justify-between">
               <span>Verification Status:</span>
@@ -308,9 +309,9 @@ export default function CheckoutPage() {
             {paymentMethod === 'USDT' && (
               <div className="space-y-5 pt-3 border-t border-white/5">
                 <div className="flex flex-col sm:flex-row items-center gap-4 bg-brand-orange/5 border border-brand-orange/10 rounded-lg p-4">
-                  {/* Simulated Crypto QR block */}
-                  <div className="flex-shrink-0 flex h-28 w-28 flex-col items-center justify-center rounded bg-white p-2">
-                    <div className="h-24 w-24 bg-[radial-gradient(square_8%_8%_at_0px_0px,#000_60%,transparent_0)] bg-[size:10px_10px]" style={{ backgroundImage: 'linear-gradient(45deg, #ff5f00 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%)', backgroundSize: '6px 6px' }} />
+                  {/* Real Binance QR code image */}
+                  <div className="flex-shrink-0 flex h-28 w-28 items-center justify-center rounded bg-white p-1">
+                    <img src="/images/binance_qr.jpg" alt="Binance USDT QR Code" className="h-26 w-26 object-contain rounded" />
                   </div>
                   <div className="space-y-2 text-xs">
                     <p className="font-bold text-white uppercase">USDT wallet transfer (TRC-20)</p>
@@ -350,7 +351,7 @@ export default function CheckoutPage() {
               <div key={item.product.id} className="flex justify-between items-center text-xs">
                 <span className="text-gray-300 font-bold truncate max-w-[150px]">{item.product.title}</span>
                 <span className="text-white font-semibold">
-                  ${(item.product.salePrice !== null ? item.product.salePrice : item.product.price).toFixed(2)}
+                  <FormattedPrice price={item.product.salePrice !== null ? item.product.salePrice : item.product.price} />
                 </span>
               </div>
             ))}
@@ -360,21 +361,21 @@ export default function CheckoutPage() {
           <div className="space-y-2 text-xs text-gray-400 border-t border-white/5 pt-4">
             <div className="flex justify-between">
               <span>Subtotal:</span>
-              <span className="text-white">${subtotal.toFixed(2)}</span>
+              <span className="text-white"><FormattedPrice price={subtotal} /></span>
             </div>
             {coupon && (
               <div className="flex justify-between text-brand-green font-semibold">
                 <span>Coupon Discount ({coupon.code}):</span>
-                <span>-${discountAmount.toFixed(2)}</span>
+                <span>-<FormattedPrice price={discountAmount} /></span>
               </div>
             )}
             <div className="flex justify-between">
               <span>Sales Tax (8%):</span>
-              <span className="text-white">${taxAmount.toFixed(2)}</span>
+              <span className="text-white"><FormattedPrice price={taxAmount} /></span>
             </div>
             <div className="flex justify-between pt-3 border-t border-white/5 text-sm font-black">
               <span className="text-white">Amount Due:</span>
-              <span className="text-brand-green">${total.toFixed(2)}</span>
+              <span className="text-brand-green"><FormattedPrice price={total} /></span>
             </div>
           </div>
 

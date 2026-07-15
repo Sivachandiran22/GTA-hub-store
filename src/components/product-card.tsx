@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useCart, Product } from '@/context/CartContext';
 import { Star, Download, ShoppingCart, Check, Heart, Eye } from 'lucide-react';
+import FormattedPrice from '@/components/formatted-price';
 
 interface ProductCardProps {
   product: Product & {
@@ -17,9 +18,6 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart, isInCart } = useCart();
   const alreadyInCart = isInCart(product.id);
-
-  const displayPrice = product.isFree ? 'Free' : `$${product.price.toFixed(2)}`;
-  const displaySalePrice = product.salePrice !== null ? `$${product.salePrice.toFixed(2)}` : null;
 
   return (
     <div className="group relative flex flex-col rounded-lg bg-brand-card/80 border border-white/5 p-4 transition-all duration-300 hover:border-brand-green/20 hover:shadow-lg hover:shadow-brand-green-glow/5 hover:-translate-y-1">
@@ -98,18 +96,20 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Price & Buy Actions */}
         <div className="mt-auto pt-4 flex items-center justify-between border-t border-white/5">
           <div className="flex items-baseline space-x-1.5">
-            {displaySalePrice ? (
+            {product.isFree ? (
+              <span className="font-display text-sm font-bold text-brand-green">Free</span>
+            ) : product.salePrice !== null ? (
               <>
                 <span className="font-display text-sm font-bold text-brand-green">
-                  {displaySalePrice}
+                  <FormattedPrice price={product.salePrice} />
                 </span>
                 <span className="text-[10px] text-gray-500 line-through">
-                  {displayPrice}
+                  <FormattedPrice price={product.price} />
                 </span>
               </>
             ) : (
               <span className="font-display text-sm font-bold text-white">
-                {displayPrice}
+                <FormattedPrice price={product.price} />
               </span>
             )}
           </div>

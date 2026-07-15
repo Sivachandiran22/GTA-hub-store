@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { Trash2, ArrowRight, Tag, X, ShoppingBag } from 'lucide-react';
+import FormattedPrice from '@/components/formatted-price';
 
 export default function CartPage() {
   const router = useRouter();
@@ -105,7 +106,7 @@ export default function CartPage() {
                 </div>
 
                 <div className="flex items-center space-x-4">
-                  <span className="text-xs font-bold text-white">${price.toFixed(2)}</span>
+                  <span className="text-xs font-bold text-white"><FormattedPrice price={price} /></span>
                   <button
                     onClick={() => removeFromCart(item.product.id)}
                     className="text-gray-500 hover:text-brand-orange transition-colors p-1"
@@ -129,7 +130,7 @@ export default function CartPage() {
           <div className="space-y-2 text-xs text-gray-400">
             <div className="flex justify-between">
               <span>Subtotal:</span>
-              <span className="text-white">${subtotal.toFixed(2)}</span>
+              <span className="text-white"><FormattedPrice price={subtotal} /></span>
             </div>
 
             {coupon && (
@@ -138,18 +139,18 @@ export default function CartPage() {
                   <Tag className="h-3 w-3 mr-1" />
                   <span>Promo Code ({coupon.code}):</span>
                 </span>
-                <span>-${discountAmount.toFixed(2)}</span>
+                <span>-<FormattedPrice price={discountAmount} /></span>
               </div>
             )}
 
             <div className="flex justify-between">
               <span>Sales Tax (8%):</span>
-              <span className="text-white">${taxAmount.toFixed(2)}</span>
+              <span className="text-white"><FormattedPrice price={taxAmount} /></span>
             </div>
 
             <div className="flex justify-between border-t border-white/5 pt-3 text-sm font-bold">
               <span className="text-white">Total:</span>
-              <span className="text-brand-green">${total.toFixed(2)}</span>
+              <span className="text-brand-green"><FormattedPrice price={total} /></span>
             </div>
           </div>
 

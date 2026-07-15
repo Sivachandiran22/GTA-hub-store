@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart, Product } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import FormattedPrice from '@/components/formatted-price';
 import { 
   Star, 
   Download, 
@@ -259,18 +260,22 @@ export default function ProductDetailPage({
 
           {/* Price display */}
           <div className="flex items-baseline space-x-2">
-            {displaySalePrice ? (
+            {product.isFree ? (
+              <span className="font-display text-2xl font-black text-brand-green">
+                Free
+              </span>
+            ) : product.salePrice !== null ? (
               <>
                 <span className="font-display text-2xl font-black text-brand-green">
-                  {displaySalePrice}
+                  <FormattedPrice price={product.salePrice} />
                 </span>
                 <span className="text-xs text-gray-500 line-through">
-                  {displayPrice}
+                  <FormattedPrice price={product.price} />
                 </span>
               </>
             ) : (
               <span className="font-display text-2xl font-black text-white">
-                {displayPrice}
+                <FormattedPrice price={product.price} />
               </span>
             )}
           </div>
@@ -493,7 +498,7 @@ export default function ProductDetailPage({
                       {p.title}
                     </Link>
                     <span className="text-[10px] text-brand-green font-bold mt-0.5 block">
-                      {p.isFree ? 'Free' : `$${p.price.toFixed(2)}`}
+                      {p.isFree ? 'Free' : <FormattedPrice price={p.price} />}
                     </span>
                   </div>
                 </div>
