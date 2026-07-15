@@ -80,7 +80,14 @@ export async function GET(request: Request) {
         slug: true,
         description: true,
         _count: {
-          select: { products: true }
+          select: {
+            products: {
+              where: {
+                isVisible: showHidden ? undefined : true,
+                game: (game && game !== 'all') ? game : undefined
+              }
+            }
+          }
         }
       }
     });
