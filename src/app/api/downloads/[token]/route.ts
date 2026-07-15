@@ -51,19 +51,40 @@ export async function GET(
           const initialUrl = `https://drive.google.com/uc?export=download&id=${driveId}`;
           const initialRes = await fetch(initialUrl, {
             headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
           });
 
           const contentType = initialRes.headers.get('Content-Type') || '';
           if (contentType.includes('text/html')) {
             const htmlText = await initialRes.text();
-            const confirmMatch = htmlText.match(/confirm=([a-zA-Z0-9_.-]+)/);
             
-            if (confirmMatch) {
-              downloadUrl = `https://drive.google.com/uc?export=download&confirm=${confirmMatch[1]}&id=${driveId}`;
+            // Extract all hidden inputs from the warning form to build the final download URL
+            const hiddenInputs: Record<string, string> = {};
+            const inputTagsMatch = htmlText.match(/<input\s+[^>]*type="hidden"[^>]*>/g) || [];
+            
+            for (const tag of inputTagsMatch) {
+              const nameMatch = tag.match(/name="([^"]+)"/);
+              const valueMatch = tag.match(/value="([^"]+)"/);
+              if (nameMatch && valueMatch) {
+                hiddenInputs[nameMatch[1]] = valueMatch[1];
+              }
+            }
+
+            if (Object.keys(hiddenInputs).length > 0) {
+              const queryParams = new URLSearchParams();
+              for (const [k, v] of Object.entries(hiddenInputs)) {
+                queryParams.set(k, v);
+              }
+              downloadUrl = `https://drive.usercontent.google.com/download?${queryParams.toString()}`;
             } else {
-              downloadUrl = initialUrl;
+              // Fallback to old token search if form inputs aren't matched
+              const confirmMatch = htmlText.match(/confirm=([a-zA-Z0-9_.-]+)/);
+              if (confirmMatch) {
+                downloadUrl = `https://drive.google.com/uc?export=download&confirm=${confirmMatch[1]}&id=${driveId}`;
+              } else {
+                downloadUrl = initialUrl;
+              }
             }
           } else {
             // It is already the binary file stream! Return it immediately.
@@ -84,7 +105,7 @@ export async function GET(
 
         const response = await fetch(downloadUrl, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
           }
         });
 
