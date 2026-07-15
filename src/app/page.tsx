@@ -179,10 +179,7 @@ export default async function HomePage() {
       q: 'How do I download my purchased files?',
       a: 'After completing checkout, you will receive an instant redirect to your dashboard. Under the "Downloads" tab, you will find expirable links to fetch your ZIP files.'
     },
-    {
-      q: 'Are the scripts compatible with QBCore and ESX?',
-      a: 'Yes, most of our FiveM scripts are written to support both QBCore and ESX frameworks automatically. Check the "Requirements" tab on each product page.'
-    },
+
     {
       q: 'Can I get a refund if the mod does not work?',
       a: 'Since we sell digital assets, all sales are final. However, we offer 24/7 support via email and Discord to help you troubleshoot installation and get the mod running.'
