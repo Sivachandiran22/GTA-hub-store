@@ -32,12 +32,60 @@ export async function GET(
       data: { downloadsCount: { increment: 1 } },
     });
 
+    // Also increment downloads count on the product model
+    await prisma.product.update({
+      where: { id: downloadToken.productId },
+      data: { downloadsCount: { increment: 1 } },
+    });
+
     const filename = `${downloadToken.product.slug}.zip`;
     
     // Check if the zipUrl is a remote URL (e.g. Google Drive, Supabase, S3)
     const zipUrl = downloadToken.product.zipUrl;
     if (zipUrl.startsWith('http://') || zipUrl.startsWith('https://')) {
-      return NextResponse.redirect(zipUrl);
+      try {
+        let downloadUrl = zipUrl;
+        const driveId = extractDriveId(zipUrl);
+        
+        if (driveId) {
+          const initialUrl = `https://drive.google.com/uc?export=download&id=${driveId}`;
+          const initialRes = await fetch(initialUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          });
+          const htmlText = await initialRes.text();
+          const confirmMatch = htmlText.match(/confirm=([a-zA-Z0-9_.-]+)/);
+          
+          if (confirmMatch) {
+            downloadUrl = `https://drive.google.com/uc?export=download&confirm=${confirmMatch[1]}&id=${driveId}`;
+          } else {
+            downloadUrl = initialUrl;
+          }
+        }
+
+        const response = await fetch(downloadUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+
+        if (response.ok && response.body) {
+          const headers: any = {
+            'Content-Type': 'application/zip',
+            'Content-Disposition': `attachment; filename="${filename}"`,
+            'Cache-Control': 'no-cache',
+          };
+          const contentLength = response.headers.get('Content-Length');
+          if (contentLength) {
+            headers['Content-Length'] = contentLength;
+          }
+          return new Response(response.body, { headers });
+        }
+      } catch (err) {
+        console.error('Remote zip proxy stream failed, falling back to direct redirect:', err);
+        return NextResponse.redirect(zipUrl);
+      }
     }
 
     // Check if the zipUrl is a private local upload
@@ -128,4 +176,14 @@ export async function GET(
     console.error('Download API error:', err);
     return new Response('Internal server error', { status: 500 });
   }
+}
+
+function extractDriveId(url: string) {
+  const reg1 = /\/file\/d\/([a-zA-Z0-9_-]+)/;
+  const reg2 = /[?&]id=([a-zA-Z0-9_-]+)/;
+  const match1 = url.match(reg1);
+  if (match1) return match1[1];
+  const match2 = url.match(reg2);
+  if (match2) return match2[1];
+  return null;
 }
