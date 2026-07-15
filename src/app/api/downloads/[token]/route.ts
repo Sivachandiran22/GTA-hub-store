@@ -34,8 +34,13 @@ export async function GET(
 
     const filename = `${downloadToken.product.slug}.zip`;
     
-    // Check if the zipUrl is a private local upload
+    // Check if the zipUrl is a remote URL (e.g. Supabase, S3, GDrive, Discord)
     const zipUrl = downloadToken.product.zipUrl;
+    if (zipUrl.startsWith('http://') || zipUrl.startsWith('https://')) {
+      return NextResponse.redirect(zipUrl);
+    }
+
+    // Check if the zipUrl is a private local upload
     if (zipUrl.startsWith('private_uploads/')) {
       const filePath = path.join(process.cwd(), zipUrl);
       if (fs.existsSync(filePath)) {

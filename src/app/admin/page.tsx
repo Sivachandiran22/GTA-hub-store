@@ -282,12 +282,29 @@ export default function AdminDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Convert thumbnail to Base64 directly client-side so it works in read-only production environments (Vercel)
+    if (type === 'thumbnail') {
+      setThumbnailUploading(true);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setFormThumbnail(event.target.result as string);
+        }
+        setThumbnailUploading(false);
+      };
+      reader.onerror = () => {
+        alert('Failed to read image file');
+        setThumbnailUploading(false);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', type);
 
-    if (type === 'thumbnail') setThumbnailUploading(true);
-    else setZipUploading(true);
+    setZipUploading(true);
 
     try {
       const res = await fetch('/api/admin/upload', {
@@ -299,21 +316,16 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (res.ok) {
-        if (type === 'thumbnail') {
-          setFormThumbnail(data.url);
-        } else {
-          setFormZip(data.url);
-          setFormSize(data.size);
-        }
+        setFormZip(data.url);
+        setFormSize(data.size);
       } else {
-        alert(data.message || 'Failed to upload file');
+        alert('Server file write is disabled in production (Vercel). Please host your mod ZIP on cloud storage (Google Drive, Discord, Dropbox, Supabase) and paste the URL directly into the field instead.');
       }
     } catch (err) {
       console.error('Failed to upload file', err);
-      alert('Upload error occurred');
+      alert('Local ZIP upload is only supported in local development. For production (Vercel), please host your mod ZIP file on a cloud storage provider (like Google Drive, Supabase, or Discord) and paste the download link directly into the input field.');
     } finally {
-      if (type === 'thumbnail') setThumbnailUploading(false);
-      else setZipUploading(false);
+      setZipUploading(false);
     }
   };
 
