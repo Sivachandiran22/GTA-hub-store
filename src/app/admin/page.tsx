@@ -611,9 +611,9 @@ export default function AdminDashboard() {
                               </td>
                               <td className="p-4 text-brand-green font-bold">${o.amount.toFixed(2)}</td>
                               <td className="p-4">
-                                <p className="font-semibold text-gray-300 text-[10px] uppercase">{o.paymentMethod || 'STRIPE'}</p>
+                                <p className="font-bold text-white text-xs uppercase">{o.paymentMethod || 'STRIPE'}</p>
                                 {o.paymentIntentId && (
-                                  <p className="font-mono text-[9px] text-gray-500 mt-0.5 select-all">{o.paymentIntentId}</p>
+                                  <p className="font-mono text-[11px] text-brand-orange mt-1 select-all font-semibold tracking-wider">{o.paymentIntentId}</p>
                                 )}
                               </td>
                               <td className="p-4">

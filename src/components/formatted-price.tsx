@@ -14,8 +14,15 @@ export default function FormattedPrice({ price }: { price: number }) {
     return <span>${price.toFixed(2)}</span>;
   }
 
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const offset = new Date().getTimezoneOffset();
+
   const isIndia =
-    Intl.DateTimeFormat().resolvedOptions().timeZone === 'Asia/Kolkata' ||
+    offset === -330 ||
+    timezone === 'Asia/Kolkata' ||
+    timezone === 'Asia/Calcutta' ||
+    timezone.includes('Kolkata') ||
+    timezone.includes('Calcutta') ||
     navigator.language === 'en-IN' ||
     (navigator.languages && navigator.languages.includes('en-IN'));
 

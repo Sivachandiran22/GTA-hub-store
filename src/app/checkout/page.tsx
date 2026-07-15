@@ -315,25 +315,24 @@ export default function CheckoutPage() {
                   </div>
                   <div className="space-y-2 text-xs">
                     <p className="font-bold text-white uppercase">USDT wallet transfer (TRC-20)</p>
-                    <p className="text-gray-400 font-mono text-[10px]">TRC20: <span className="text-brand-orange font-bold break-all">TY3gNzX1mK81aH2bS5g8xLp91fQ2Z91mK</span></p>
-                    <p className="text-gray-400 font-mono">Binance Pay ID: <span className="text-white font-bold">827184209</span></p>
-                    <p className="text-[10px] text-gray-500 leading-relaxed">Ensure you transfer via Tron Network (TRC20) or use Binance Pay. Transfer the exact USD equivalent to avoid delays.</p>
+                    <p className="text-gray-400 font-mono text-[10px]">TRC20: <span className="text-brand-orange font-bold break-all">TBdhe3wiv1MrX3MFc1TouEcASzLzaRNzm6</span></p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">Ensure you transfer via Tron Network (TRC20). Transfer the exact USD equivalent to avoid verification delays.</p>
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-brand-orange flex items-center space-x-1">
-                    <span>USDT Blockchain TxID / Binance Pay Ref ID (Required)</span>
+                    <span>USDT Blockchain Transaction Hash / TxID (Required)</span>
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 7f98e102f... or Binance Pay transaction code"
+                    placeholder="e.g. 7f98e102f... (64-character hash)"
                     value={refNo}
                     onChange={(e) => setRefNo(e.target.value.trim())}
                     className="w-full rounded bg-black/60 border border-white/10 px-3.5 py-2.5 text-xs text-white focus:border-brand-orange focus:outline-none font-mono"
                   />
-                  <p className="text-[10px] text-gray-500 mt-1">Provide the Transaction Hash (TxID) or Binance Pay receipt code to verify your transfer.</p>
+                  <p className="text-[10px] text-gray-500 mt-1">Provide the 64-character Transaction Hash (TxID) to verify your transfer on the Tron blockchain explorer.</p>
                 </div>
               </div>
             )}
