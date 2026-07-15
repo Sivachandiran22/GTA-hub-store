@@ -288,8 +288,14 @@ function Navigation() {
       )}
       {/* Custom Orders overlay modal */}
       {customOrdersOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-          <div className="relative w-full max-w-md rounded-lg border border-brand-green/30 bg-brand-card p-6 shadow-2xl space-y-4">
+        <div 
+          onClick={() => setCustomOrdersOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm cursor-pointer"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md rounded-lg border border-brand-green/30 bg-brand-card p-6 shadow-2xl space-y-4 cursor-default"
+          >
             <button 
               onClick={() => setCustomOrdersOpen(false)}
               className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
@@ -312,20 +318,30 @@ function Navigation() {
 
             <div className="rounded bg-black/40 border border-white/5 p-4 space-y-3">
               <div className="flex items-center justify-between text-xs font-sans">
-                <span className="text-gray-400">Commission Contact:</span>
+                <span className="text-gray-400">Email Contact:</span>
                 <span className="text-brand-green font-bold select-all font-mono">vasigaming2k23@gmail.com</span>
               </div>
               <p className="text-[10px] text-gray-500 leading-normal font-sans">
-                Drop us an email with your asset designs, reference photos, or concept plans, and we will get back to you with a custom quote!
+                Send us an email or message us on WhatsApp with your design requirements, reference photos, or concept plans, and we will get back to you!
               </p>
             </div>
 
-            <a
-              href="mailto:vasigaming2k23@gmail.com?subject=Custom%20Asset%20Commission%20Inquiry"
-              className="w-full flex items-center justify-center space-x-2 rounded bg-brand-green py-2.5 text-xs font-black uppercase text-black tracking-wider hover:bg-opacity-90 transition-all font-display"
-            >
-              <span>Send Commission Email</span>
-            </a>
+            <div className="grid grid-cols-2 gap-3">
+              <a
+                href="mailto:vasigaming2k23@gmail.com?subject=Custom%20Asset%20Inquiry"
+                className="flex items-center justify-center space-x-2 rounded bg-brand-green py-2.5 text-xs font-black uppercase text-black tracking-wider hover:bg-opacity-90 transition-all font-display"
+              >
+                <span>Send Email</span>
+              </a>
+              <a
+                href="https://wa.me/919876543210"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center space-x-2 rounded bg-[#25D366] py-2.5 text-xs font-black uppercase text-white tracking-wider hover:bg-opacity-90 transition-all font-display"
+              >
+                <span>WhatsApp</span>
+              </a>
+            </div>
           </div>
         </div>
       )}

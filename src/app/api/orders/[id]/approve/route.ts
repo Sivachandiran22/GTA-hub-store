@@ -48,6 +48,12 @@ export async function POST(
             expiresAt: expiry
           }
         });
+
+        // Increment downloads count on the product model immediately
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { downloadsCount: { increment: 1 } }
+        });
       }
     });
 
