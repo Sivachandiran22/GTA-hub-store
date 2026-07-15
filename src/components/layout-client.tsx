@@ -56,6 +56,7 @@ function Navigation() {
     { name: 'Home', href: '/' },
     { name: 'GTA 5', href: '/shop?game=GTA5' },
     { name: 'GTA 6', href: '/shop?game=GTA6' },
+    { name: '3D Models', href: '/shop?game=3D_MODEL' },
     { name: 'Blog', href: '/blog' },
     { name: 'Support', href: '/contact' },
   ];

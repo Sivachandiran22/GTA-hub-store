@@ -117,7 +117,8 @@ export async function POST(request: Request) {
       isFeatured,
       isFree,
       zipUrl,
-      game
+      game,
+      isVisible
     } = body;
 
     if (!title || !slug || !shortDescription || !longDescription || price === undefined || !categoryId || !thumbnailUrl || !zipUrl) {
@@ -140,6 +141,7 @@ export async function POST(request: Request) {
         installationGuide,
         isFeatured: !!isFeatured,
         isFree: !!isFree,
+        isVisible: isVisible !== undefined ? !!isVisible : true,
         game: game || 'GTA5',
         zipUrl,
         seoTitle: `${title} - GTA Hub Store`,

@@ -21,7 +21,8 @@ export default function CheckoutPage() {
   const [cardExpiry, setCardExpiry] = useState('12/28');
   const [cardCvc, setCardCvc] = useState('123');
   
-  const [paymentMethod, setPaymentMethod] = useState('STRIPE');
+  const [paymentMethod, setPaymentMethod] = useState('UPI');
+  const [refNo, setRefNo] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -30,6 +31,7 @@ export default function CheckoutPage() {
   const [successDetails, setSuccessDetails] = useState<{
     orderNumber: string;
     netAmount: number;
+    status: string;
     downloads: Array<{ title: string; token: string }>;
   } | null>(null);
 
@@ -72,6 +74,7 @@ export default function CheckoutPage() {
           productIdList: cart.map((item) => item.product.id),
           couponCode: coupon?.code || null,
           paymentMethod,
+          paymentIntentId: refNo || null,
         }),
       });
 
@@ -108,9 +111,9 @@ export default function CheckoutPage() {
   }
 
   if (orderSuccess && successDetails) {
+    const isPending = successDetails.status === 'PENDING';
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center space-y-8 relative overflow-hidden">
-        {/* Confetti effect containers */}
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_60%_at_50%_-10%,rgba(0,255,135,0.05),transparent)]" />
         
         <div className="rounded-2xl bg-brand-card/90 border border-brand-green/30 p-8 backdrop-blur-md space-y-6">
@@ -120,12 +123,15 @@ export default function CheckoutPage() {
           
           <div className="space-y-2">
             <h1 className="font-display text-2xl font-black uppercase text-white tracking-wider">
-              Purchase Complete!
+              {isPending ? 'Payment Awaiting Verification!' : 'Purchase Complete!'}
             </h1>
-            <p className="text-xs text-gray-400">Your order has been paid. Digital assets are ready to use.</p>
+            <p className="text-xs text-gray-400">
+              {isPending 
+                ? 'Your order reference has been submitted. Our team will verify the payment shortly.' 
+                : 'Your order has been paid. Digital assets are ready to use.'}
+            </p>
           </div>
 
-          {/* Receipt telemetry */}
           <div className="rounded bg-black/50 border border-white/5 p-4 text-xs text-gray-400 space-y-2.5 text-left font-mono">
             <div className="flex justify-between border-b border-white/5 pb-2 text-[10px] text-gray-500">
               <span>Receipt details:</span>
@@ -139,39 +145,47 @@ export default function CheckoutPage() {
               <span className="text-brand-green font-bold">${successDetails.netAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Delivery Status:</span>
-              <span className="text-brand-green uppercase font-bold">Instant Download</span>
+              <span>Verification Status:</span>
+              <span className={`${isPending ? 'text-brand-orange animate-pulse' : 'text-brand-green'} uppercase font-bold`}>
+                {isPending ? 'Pending Approval (5-15 mins)' : 'Instant Download'}
+              </span>
             </div>
           </div>
 
-          {/* Downloads links list */}
-          <div className="space-y-3 text-left">
-            <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Your Digital Assets:</span>
-            <div className="space-y-2">
-              {successDetails.downloads.map((dl, idx) => (
-                <div key={idx} className="flex items-center justify-between rounded bg-white/5 border border-white/5 px-3 py-2.5 text-xs">
-                  <span className="text-white font-bold truncate max-w-[280px]">{dl.title}</span>
-                  <a
-                    href={`/api/downloads/${dl.token}`}
-                    className="rounded bg-brand-green px-3 py-1 text-[10px] font-black uppercase text-black hover:bg-opacity-90 transition-colors"
-                  >
-                    Download ZIP
-                  </a>
-                </div>
-              ))}
+          {/* Downloads links list (Only if paid/instantly completed) */}
+          {!isPending && successDetails.downloads && successDetails.downloads.length > 0 ? (
+            <div className="space-y-3 text-left">
+              <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Your Digital Assets:</span>
+              <div className="space-y-2">
+                {successDetails.downloads.map((dl: any, idx) => (
+                  <div key={idx} className="flex items-center justify-between rounded bg-white/5 border border-white/5 px-3 py-2.5 text-xs">
+                    <span className="text-white font-bold truncate max-w-[280px]">{dl.title}</span>
+                    <a
+                      href={`/api/downloads/${dl.token}`}
+                      className="rounded bg-brand-green px-3 py-1 text-[10px] font-black uppercase text-black hover:bg-opacity-90 transition-colors"
+                    >
+                      Download ZIP
+                    </a>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : isPending ? (
+            <div className="rounded bg-brand-orange/10 border border-brand-orange/20 p-4 text-xs text-brand-orange text-left leading-relaxed">
+              💡 **Next Steps**: We will review the submitted payment reference. Once confirmed, you will find your assets directly under the **Digital Product Library** inside your Account Dashboard. You can close this window now.
+            </div>
+          ) : null}
 
           <div className="pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
             <Link
               href="/dashboard"
-              className="rounded bg-brand-orange py-3 text-xs font-black uppercase text-white tracking-wider hover:bg-opacity-95 transition-all"
+              className="rounded bg-brand-orange py-3 text-xs font-black uppercase text-white tracking-wider hover:bg-opacity-95 transition-all flex items-center justify-center"
             >
               Account Dashboard
             </Link>
             <Link
               href="/shop"
-              className="rounded border border-white/10 bg-transparent py-3 text-xs font-black uppercase text-gray-300 hover:bg-white/5 transition-all"
+              className="rounded border border-white/10 bg-transparent py-3 text-xs font-black uppercase text-gray-300 hover:bg-white/5 transition-all flex items-center justify-center"
             >
               Keep Shopping
             </Link>
@@ -230,17 +244,19 @@ export default function CheckoutPage() {
 
             {/* Payment Method Selector */}
             <div className="space-y-2.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Gateway</label>
-              <div className="grid grid-cols-3 gap-3">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Select Payment Method</label>
+              <div className="grid grid-cols-2 gap-3">
                 {[
-                  { id: 'STRIPE', name: 'Credit Card' },
-                  { id: 'PAYPAL', name: 'PayPal' },
-                  { id: 'UPI', name: 'Razorpay / UPI' },
+                  { id: 'UPI', name: 'UPI (India)' },
+                  { id: 'USDT', name: 'USDT / Binance (Intl)' },
                 ].map((method) => (
                   <button
                     key={method.id}
                     type="button"
-                    onClick={() => setPaymentMethod(method.id)}
+                    onClick={() => {
+                      setPaymentMethod(method.id);
+                      setRefNo('');
+                    }}
                     className={`rounded border p-3 text-center transition-all ${
                       paymentMethod === method.id
                         ? 'border-brand-green bg-brand-green/10 text-brand-green font-bold'
@@ -253,42 +269,70 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Simulated Card Form (Visible if Stripe selected) */}
-            {paymentMethod === 'STRIPE' && (
-              <div className="space-y-4 pt-2">
+            {/* UPI QR Payment Detail Block */}
+            {paymentMethod === 'UPI' && (
+              <div className="space-y-5 pt-3 border-t border-white/5">
+                <div className="flex flex-col sm:flex-row items-center gap-4 bg-brand-green/5 border border-brand-green/10 rounded-lg p-4">
+                  {/* Simulated QR block */}
+                  <div className="flex-shrink-0 flex h-28 w-28 flex-col items-center justify-center rounded bg-white p-2">
+                    <div className="h-24 w-24 bg-[radial-gradient(square_8%_8%_at_0px_0px,#000_60%,transparent_0)] bg-[size:10px_10px]" style={{ backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%)', backgroundSize: '8px 8px' }} />
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <p className="font-bold text-white uppercase">Scan QR to pay via UPI</p>
+                    <p className="text-gray-400 font-mono">UPI ID: <span className="text-brand-green font-bold">admin@gtahub.store</span></p>
+                    <p className="text-gray-400 font-mono">Name: <span className="text-white">GTA HUB STORE</span></p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">Please open GPay, PhonePe, Paytm, or BHIM, scan the QR code (or enter the UPI ID), and transfer the exact due amount.</p>
+                  </div>
+                </div>
+
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Card Number</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-brand-orange flex items-center space-x-1">
+                    <span>12-Digit UPI UTR Reference Number (Required)</span>
+                  </label>
                   <input
                     type="text"
                     required
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
-                    className="w-full rounded bg-black/60 border border-white/10 px-3.5 py-2.5 text-xs text-white focus:border-brand-green focus:outline-none font-mono"
+                    placeholder="e.g. 340918721642"
+                    pattern="[0-9]{12}"
+                    title="Please enter the exact 12-digit numeric UPI Transaction UTR ID"
+                    value={refNo}
+                    onChange={(e) => setRefNo(e.target.value.replace(/[^0-9]/g, ''))}
+                    className="w-full rounded bg-black/60 border border-white/10 px-3.5 py-2.5 text-xs text-white focus:border-brand-orange focus:outline-none font-mono"
                   />
+                  <p className="text-[10px] text-gray-500 mt-1">Provide the UTR reference number from your receipt to automate confirmation matching.</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Expiration Date</label>
-                    <input
-                      type="text"
-                      required
-                      value={cardExpiry}
-                      onChange={(e) => setCardExpiry(e.target.value)}
-                      placeholder="MM/YY"
-                      className="w-full rounded bg-black/60 border border-white/10 px-3.5 py-2.5 text-xs text-white focus:border-brand-green focus:outline-none font-mono"
-                    />
+              </div>
+            )}
+
+            {/* USDT QR Payment Detail Block */}
+            {paymentMethod === 'USDT' && (
+              <div className="space-y-5 pt-3 border-t border-white/5">
+                <div className="flex flex-col sm:flex-row items-center gap-4 bg-brand-orange/5 border border-brand-orange/10 rounded-lg p-4">
+                  {/* Simulated Crypto QR block */}
+                  <div className="flex-shrink-0 flex h-28 w-28 flex-col items-center justify-center rounded bg-white p-2">
+                    <div className="h-24 w-24 bg-[radial-gradient(square_8%_8%_at_0px_0px,#000_60%,transparent_0)] bg-[size:10px_10px]" style={{ backgroundImage: 'linear-gradient(45deg, #ff5f00 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%)', backgroundSize: '6px 6px' }} />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">CVC Code</label>
-                    <input
-                      type="text"
-                      required
-                      value={cardCvc}
-                      onChange={(e) => setCardCvc(e.target.value)}
-                      placeholder="123"
-                      className="w-full rounded bg-black/60 border border-white/10 px-3.5 py-2.5 text-xs text-white focus:border-brand-green focus:outline-none font-mono"
-                    />
+                  <div className="space-y-2 text-xs">
+                    <p className="font-bold text-white uppercase">USDT wallet transfer (TRC-20)</p>
+                    <p className="text-gray-400 font-mono text-[10px]">TRC20: <span className="text-brand-orange font-bold break-all">TY3gNzX1mK81aH2bS5g8xLp91fQ2Z91mK</span></p>
+                    <p className="text-gray-400 font-mono">Binance Pay ID: <span className="text-white font-bold">827184209</span></p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">Ensure you transfer via Tron Network (TRC20) or use Binance Pay. Transfer the exact USD equivalent to avoid delays.</p>
                   </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-brand-orange flex items-center space-x-1">
+                    <span>USDT Blockchain TxID / Binance Pay Ref ID (Required)</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 7f98e102f... or Binance Pay transaction code"
+                    value={refNo}
+                    onChange={(e) => setRefNo(e.target.value.trim())}
+                    className="w-full rounded bg-black/60 border border-white/10 px-3.5 py-2.5 text-xs text-white focus:border-brand-orange focus:outline-none font-mono"
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1">Provide the Transaction Hash (TxID) or Binance Pay receipt code to verify your transfer.</p>
                 </div>
               </div>
             )}

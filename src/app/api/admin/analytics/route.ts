@@ -64,6 +64,8 @@ export async function GET(request: Request) {
         customerEmail: o.user.email,
         amount: o.netAmount,
         status: o.status,
+        paymentMethod: o.paymentMethod,
+        paymentIntentId: o.paymentIntentId,
         date: o.createdAt
       })),
       topProducts: topProducts.map(p => ({

@@ -30,6 +30,8 @@ interface RecentOrderType {
   customerEmail: string;
   amount: number;
   status: string;
+  paymentMethod?: string;
+  paymentIntentId?: string | null;
   date: string;
 }
 
@@ -135,7 +137,7 @@ export default function AdminDashboard() {
     setFormSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
   };
 
-  const handleCreateProductSubmit = async (e: React.FormEvent) => {
+  const handleCreateProductSubmit = async (e: React.FormEvent, makeVisible: boolean) => {
     e.preventDefault();
     if (formIsFree) setFormPrice('0.00');
     setFormError('');
@@ -159,18 +161,22 @@ export default function AdminDashboard() {
           thumbnailUrl: formThumbnail,
           version: formVersion,
           downloadSize: formSize,
-          requirements: formRequirements,
-          installationGuide: formGuide,
+          requirements: formRequirements || null,
+          installationGuide: formGuide || null,
           isFeatured: formIsFeatured,
           isFree: formIsFree,
           game: formGame,
-          zipUrl: formZip
+          zipUrl: formZip,
+          isVisible: makeVisible
         })
       });
 
       const data = await res.json();
       if (res.ok) {
         setFormSuccess(true);
+        // Clear saved draft from localStorage
+        localStorage.removeItem('gta_hub_admin_draft');
+
         // Reset form fields
         setFormTitle('');
         setFormSlug('');
@@ -181,6 +187,12 @@ export default function AdminDashboard() {
         setFormRequirements('');
         setFormGuide('All installation instructions are given in the mod zip folder.');
         setFormZip('');
+        setFormThumbnail('/images/products/vehicle-default.jpg');
+        setFormVersion('1.0.0');
+        setFormSize('45 MB');
+        setFormIsFeatured(false);
+        setFormIsFree(false);
+        setFormGame('GTA5');
         
         // Refresh summary count
         if (summary) {
@@ -282,15 +294,35 @@ export default function AdminDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Convert thumbnail to Base64 directly client-side so it works in read-only production environments (Vercel)
+    // Convert and compress thumbnail to Base64 client-side
     if (type === 'thumbnail') {
       setThumbnailUploading(true);
       const reader = new FileReader();
       reader.onload = (event) => {
-        if (event.target?.result) {
-          setFormThumbnail(event.target.result as string);
-        }
-        setThumbnailUploading(false);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800; // Resize width to maximum 800px
+          const scale = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scale;
+
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            // Export as JPEG with 70% quality (greatly reduces size to ~50-80KB to prevent Payload Too Large errors)
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            setFormThumbnail(compressedBase64);
+          } else {
+            setFormThumbnail(event.target?.result as string);
+          }
+          setThumbnailUploading(false);
+        };
+        img.onerror = () => {
+          alert('Failed to process image file');
+          setThumbnailUploading(false);
+        };
+        img.src = event.target?.result as string;
       };
       reader.onerror = () => {
         alert('Failed to read image file');
@@ -326,6 +358,116 @@ export default function AdminDashboard() {
       alert('Local ZIP upload is only supported in local development. For production (Vercel), please host your mod ZIP file on a cloud storage provider (like Google Drive, Supabase, or Discord) and paste the download link directly into the input field.');
     } finally {
       setZipUploading(false);
+    }
+  };
+
+  const handleApproveOrder = async (orderId: string) => {
+    if (!window.confirm('Are you sure you want to approve this payment? This will mark the order as COMPLETED and instantly issue download links to the customer.')) return;
+    try {
+      const res = await fetch(`/api/orders/${orderId}/approve`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRecentOrders(prev =>
+          prev.map(o => (o.id === orderId ? { ...o, status: 'COMPLETED' } : o))
+        );
+        alert('Order successfully approved! Downloads are now active for the user.');
+        
+        const refreshRes = await fetch('/api/admin/analytics', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const refreshData = await refreshRes.json();
+        if (refreshRes.ok) {
+          setSummary(refreshData.summary);
+        }
+      } else {
+        alert(data.message || 'Failed to approve order');
+      }
+    } catch (err) {
+      console.error('Failed to approve order', err);
+      alert('Connection error occurred');
+    }
+  };
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem('gta_hub_admin_draft');
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft);
+        if (draft.title) setFormTitle(draft.title);
+        if (draft.slug) setFormSlug(draft.slug);
+        if (draft.shortDesc) setFormShortDesc(draft.shortDesc);
+        if (draft.longDesc) setFormLongDesc(draft.longDesc);
+        if (draft.price) setFormPrice(draft.price);
+        if (draft.salePrice !== undefined) setFormSalePrice(draft.salePrice);
+        if (draft.category) setFormCategory(draft.category);
+        if (draft.thumbnail) setFormThumbnail(draft.thumbnail);
+        if (draft.version) setFormVersion(draft.version);
+        if (draft.size) setFormSize(draft.size);
+        if (draft.requirements) setFormRequirements(draft.requirements);
+        if (draft.guide) setFormGuide(draft.guide);
+        if (draft.zip) setFormZip(draft.zip);
+        if (draft.isFeatured !== undefined) setFormIsFeatured(draft.isFeatured);
+        if (draft.isFree !== undefined) setFormIsFree(draft.isFree);
+        if (draft.game) setFormGame(draft.game);
+      }
+    } catch (err) {
+      console.error('Failed to restore draft from localStorage', err);
+    }
+  }, []);
+
+  // Auto-save draft on form field changes
+  useEffect(() => {
+    if (formTitle || formShortDesc || formLongDesc || formZip || formThumbnail !== '/images/products/vehicle-default.jpg') {
+      const draft = {
+        title: formTitle,
+        slug: formSlug,
+        shortDesc: formShortDesc,
+        longDesc: formLongDesc,
+        price: formPrice,
+        salePrice: formSalePrice,
+        category: formCategory,
+        thumbnail: formThumbnail,
+        version: formVersion,
+        size: formSize,
+        requirements: formRequirements,
+        guide: formGuide,
+        zip: formZip,
+        isFeatured: formIsFeatured,
+        isFree: formIsFree,
+        game: formGame
+      };
+      localStorage.setItem('gta_hub_admin_draft', JSON.stringify(draft));
+    }
+  }, [
+    formTitle, formSlug, formShortDesc, formLongDesc, formPrice, formSalePrice,
+    formCategory, formThumbnail, formVersion, formSize, formRequirements, formGuide,
+    formZip, formIsFeatured, formIsFree, formGame
+  ]);
+
+  const handleClearDraft = () => {
+    if (window.confirm('Are you sure you want to discard your draft and start over?')) {
+      localStorage.removeItem('gta_hub_admin_draft');
+      setFormTitle('');
+      setFormSlug('');
+      setFormShortDesc('');
+      setFormLongDesc('');
+      setFormPrice('19.99');
+      setFormSalePrice('');
+      setFormRequirements('');
+      setFormGuide('All installation instructions are given in the mod zip folder.');
+      setFormZip('');
+      setFormThumbnail('/images/products/vehicle-default.jpg');
+      setFormVersion('1.0.0');
+      setFormSize('45 MB');
+      setFormIsFeatured(false);
+      setFormIsFree(false);
+      setFormGame('GTA5');
     }
   };
 
@@ -435,7 +577,9 @@ export default function AdminDashboard() {
                             <th className="p-4">Receipt</th>
                             <th className="p-4">Customer</th>
                             <th className="p-4">Net Sum</th>
-                            <th className="p-4">Date</th>
+                            <th className="p-4">Gateway & Reference</th>
+                            <th className="p-4">Status</th>
+                            <th className="p-4 text-right">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 text-gray-300">
@@ -447,7 +591,33 @@ export default function AdminDashboard() {
                                 <p className="text-[10px] text-gray-500 mt-0.5">{o.customerEmail}</p>
                               </td>
                               <td className="p-4 text-brand-green font-bold">${o.amount.toFixed(2)}</td>
-                              <td className="p-4">{new Date(o.date).toLocaleDateString()}</td>
+                              <td className="p-4">
+                                <p className="font-semibold text-gray-300 text-[10px] uppercase">{o.paymentMethod || 'STRIPE'}</p>
+                                {o.paymentIntentId && (
+                                  <p className="font-mono text-[9px] text-gray-500 mt-0.5 select-all">{o.paymentIntentId}</p>
+                                )}
+                              </td>
+                              <td className="p-4">
+                                <span className={`rounded px-2 py-0.5 text-[9px] font-bold uppercase ${
+                                  o.status === 'COMPLETED'
+                                    ? 'bg-brand-green/10 border border-brand-green/20 text-brand-green'
+                                    : 'bg-brand-orange/15 border border-brand-orange/25 text-brand-orange animate-pulse'
+                                }`}>
+                                  {o.status}
+                                </span>
+                              </td>
+                              <td className="p-4 text-right">
+                                {o.status === 'PENDING' ? (
+                                  <button
+                                    onClick={() => handleApproveOrder(o.id)}
+                                    className="rounded bg-brand-green px-2.5 py-1 text-[9px] font-bold uppercase text-black hover:bg-opacity-90 transition-all shadow-md shadow-brand-green/10"
+                                  >
+                                    Approve
+                                  </button>
+                                ) : (
+                                  <span className="text-[10px] text-gray-600 font-bold uppercase">Issued</span>
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -491,7 +661,7 @@ export default function AdminDashboard() {
                 <span>Upload Mod Asset to Database</span>
               </h2>
 
-              <form onSubmit={handleCreateProductSubmit} className="space-y-4 text-xs">
+              <form onSubmit={(e) => handleCreateProductSubmit(e, true)} className="space-y-4 text-xs">
                 {/* Product Name & Slug */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
@@ -725,12 +895,28 @@ export default function AdminDashboard() {
                   </p>
                 )}
 
-                <button
-                  type="submit"
-                  className="rounded bg-brand-green px-6 py-3 text-xs font-black uppercase text-black tracking-wider shadow-md hover:bg-opacity-95"
-                >
-                  Publish Mod to Store
-                </button>
+                <div className="flex flex-wrap gap-4 pt-2">
+                  <button
+                    type="submit"
+                    className="rounded bg-brand-green px-6 py-3 text-xs font-black uppercase text-black tracking-wider shadow-md hover:bg-opacity-95"
+                  >
+                    Publish Mod to Store
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleCreateProductSubmit(e, false)}
+                    className="rounded bg-brand-orange px-6 py-3 text-xs font-black uppercase text-white tracking-wider shadow-md hover:bg-opacity-95"
+                  >
+                    Save as Draft
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearDraft}
+                    className="rounded border border-white/10 bg-transparent px-6 py-3 text-xs font-black uppercase text-gray-400 hover:bg-white/5"
+                  >
+                    Discard Draft
+                  </button>
+                </div>
               </form>
             </div>
           )}
