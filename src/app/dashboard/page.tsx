@@ -78,6 +78,10 @@ export default function UserDashboard() {
   const [ticketSuccess, setTicketSuccess] = useState(false);
   const [ticketError, setTicketError] = useState('');
 
+  // Customer Edit Reference states
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editingTxId, setEditingTxId] = useState('');
+
   // Fetch dashboard data
   useEffect(() => {
     if (!isAuthenticated && !authLoading) {
@@ -140,6 +144,33 @@ export default function UserDashboard() {
       }
     } catch (err) {
       setTicketError('Connection error occurred');
+    }
+  };
+
+  const handleUserUpdateTxId = async (orderId: string, transactionId: string) => {
+    if (!transactionId.trim()) return;
+    try {
+      const res = await fetch(`/api/orders/${orderId}/user-update-txid`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ transactionId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOrders(prev =>
+          prev.map(o => (o.id === orderId ? { ...o, paymentIntentId: transactionId, status: data.status, rejectionReason: null } : o))
+        );
+        setEditingOrderId(null);
+        alert('Your payment reference has been updated and resubmitted successfully! The operator will review it shortly.');
+      } else {
+        alert(data.message || 'Failed to update reference');
+      }
+    } catch (err) {
+      console.error('Failed to update reference', err);
+      alert('Connection error occurred');
     }
   };
 
@@ -297,11 +328,26 @@ export default function UserDashboard() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-gray-400">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-gray-400">
                     <p>Gateway: <strong className="text-white uppercase">{o.paymentMethod}</strong></p>
-                    {o.paymentIntentId && (
-                      <p>Reference UTR: <strong className="font-mono text-brand-orange select-all">{o.paymentIntentId}</strong></p>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {o.paymentIntentId ? (
+                        <p>Reference UTR: <strong className="font-mono text-brand-orange select-all">{o.paymentIntentId}</strong></p>
+                      ) : (
+                        <p className="text-brand-orange italic font-semibold">UTR ID Missing</p>
+                      )}
+                      {o.status !== 'COMPLETED' && (
+                        <button
+                          onClick={() => {
+                            setEditingOrderId(o.id);
+                            setEditingTxId(o.paymentIntentId || '');
+                          }}
+                          className="rounded bg-brand-green/10 border border-brand-green/20 px-2 py-0.5 text-[9px] font-bold uppercase text-brand-green hover:bg-brand-green hover:text-black transition-all hover:scale-102"
+                        >
+                          Edit Reference
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Display rejection reason alert box if cancelled and reason exists */}
@@ -404,6 +450,39 @@ export default function UserDashboard() {
             ) : (
               <p className="text-xs text-gray-500 italic py-4 text-center">No past tickets found.</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Reference Modal */}
+      {editingOrderId && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-lg border border-white/10 bg-brand-card p-6 space-y-4">
+            <h3 className="font-display text-sm font-bold uppercase text-white tracking-wider">Update Transaction Reference</h3>
+            <p className="text-xs text-gray-400">Enter your payment Reference Number (UTR / TxID / Receipt ID) so the operator can verify your payment.</p>
+            
+            <input
+              type="text"
+              value={editingTxId}
+              onChange={(e) => setEditingTxId(e.target.value)}
+              placeholder="e.g. 123456789012"
+              className="w-full rounded bg-black/60 border border-white/10 px-3 py-2.5 text-xs text-white focus:border-brand-green focus:outline-none"
+            />
+
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                onClick={() => setEditingOrderId(null)}
+                className="rounded border border-white/10 px-4 py-2 text-xs font-bold uppercase text-gray-400 hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleUserUpdateTxId(editingOrderId, editingTxId)}
+                className="rounded bg-brand-green px-4 py-2 text-xs font-bold uppercase text-black hover:bg-opacity-95"
+              >
+                Save Reference
+              </button>
+            </div>
           </div>
         </div>
       )}
