@@ -37,25 +37,7 @@ export async function GET(
     // Check if the zipUrl is a remote URL (e.g. Google Drive, Supabase, S3)
     const zipUrl = downloadToken.product.zipUrl;
     if (zipUrl.startsWith('http://') || zipUrl.startsWith('https://')) {
-      try {
-        const response = await fetch(zipUrl);
-        if (response.ok && response.body) {
-          const headers: any = {
-            'Content-Type': response.headers.get('Content-Type') || 'application/zip',
-            'Content-Disposition': `attachment; filename="${filename}"`,
-            'Cache-Control': 'no-cache',
-          };
-          const contentLength = response.headers.get('Content-Length');
-          if (contentLength) {
-            headers['Content-Length'] = contentLength;
-          }
-          // Stream the remote file directly without revealing the source URL
-          return new Response(response.body, { headers });
-        }
-      } catch (err) {
-        console.error('Remote zip proxy stream failed, falling back to redirect:', err);
-        return NextResponse.redirect(zipUrl);
-      }
+      return NextResponse.redirect(zipUrl);
     }
 
     // Check if the zipUrl is a private local upload

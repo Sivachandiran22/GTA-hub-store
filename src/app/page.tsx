@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import prisma from '@/lib/db';
 import ProductCard from '@/components/product-card';
+import FeaturedSlider from '@/components/featured-slider';
 import { 
   ArrowRight, 
   Sparkles, 
@@ -110,7 +111,7 @@ export default async function HomePage() {
   return (
     <div className="space-y-20 pb-20">
       {/* 1. Hero Section */}
-      <section className="relative overflow-hidden pt-24 pb-20 md:pt-32 md:pb-28">
+      <section className="relative overflow-hidden pt-12 pb-10 md:pt-16 md:pb-14">
         <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(0,255,135,0.08),transparent)]" />
         
         {/* Glow dots floating ambient banner */}
@@ -118,37 +119,37 @@ export default async function HomePage() {
         <div className="absolute left-1/4 bottom-1/3 h-64 w-64 rounded-full bg-brand-orange/5 blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
 
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8 relative z-10">
-          <div className="inline-flex items-center space-x-2 rounded-full bg-brand-card/60 border border-white/5 px-4 py-1.5 mb-6 text-xs text-brand-green font-medium">
-            <Sparkles className="h-4 w-4" />
+          <div className="inline-flex items-center space-x-2 rounded-full bg-brand-card/60 border border-white/5 px-4 py-1.5 mb-4 text-[10px] text-brand-green font-medium">
+            <Sparkles className="h-3.5 w-3.5" />
             <span>Next-Gen GTA Marketplace</span>
           </div>
 
-          <h1 className="font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-7xl uppercase">
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl uppercase">
             GTA <span className="text-brand-green neon-glow-green">HUB</span> STORE
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl font-display text-lg md:text-xl font-medium tracking-wide text-gray-400">
+          <p className="mx-auto mt-3 max-w-xl font-display text-sm md:text-base font-semibold tracking-wide text-gray-400">
             Premium GTA Mods Marketplace
           </p>
-          <p className="mx-auto mt-2 max-w-xl text-xs sm:text-sm text-gray-500 leading-relaxed">
+          <p className="mx-auto mt-1 max-w-lg text-[11px] sm:text-xs text-gray-500 leading-relaxed">
             High-quality Peds, Props, MLOs, Buildings, Vehicles, Scripts and more. All assets are 100% compatible with both FiveM and Single Player (SP).
           </p>
 
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               href="/shop"
-              className="rounded bg-brand-green px-8 py-3.5 text-xs font-black uppercase text-black tracking-wider shadow-lg shadow-brand-green/20 hover:bg-opacity-90 hover:scale-102 transition-all"
+              className="rounded bg-brand-green px-6 py-2.5 text-xs font-black uppercase text-black tracking-wider shadow-lg shadow-brand-green/20 hover:bg-opacity-90 hover:scale-102 transition-all"
             >
               Browse Mods
             </Link>
             <Link
               href="/shop?sort=newest"
-              className="rounded bg-brand-card border border-white/10 px-8 py-3.5 text-xs font-black uppercase text-white tracking-wider hover:bg-white/5 transition-colors"
+              className="rounded bg-brand-card border border-white/10 px-6 py-2.5 text-xs font-black uppercase text-white tracking-wider hover:bg-white/5 transition-colors"
             >
               Latest Uploads
             </Link>
             <Link
               href="/shop?type=free"
-              className="rounded bg-brand-orange/10 border border-brand-orange/20 px-8 py-3.5 text-xs font-black uppercase text-brand-orange tracking-wider hover:bg-brand-orange/20 transition-all"
+              className="rounded bg-brand-orange/10 border border-brand-orange/20 px-6 py-2.5 text-xs font-black uppercase text-brand-orange tracking-wider hover:bg-brand-orange/20 transition-all"
             >
               Free Downloads
             </Link>
@@ -156,7 +157,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 2. Featured Categories */}
+      {/* 2. Slidable Featured Hero Panel */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <FeaturedSlider products={featuredProducts} />
+      </section>
+
+      {/* 3. Featured Categories */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>
