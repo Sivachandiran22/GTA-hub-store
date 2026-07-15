@@ -20,7 +20,8 @@ import {
   Gamepad2, 
   Mail, 
   Send,
-  MessageSquare
+  MessageSquare,
+  Sparkles
 } from 'lucide-react';
 
 function Navigation() {
@@ -32,6 +33,7 @@ function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [customOrdersOpen, setCustomOrdersOpen] = useState(false);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +59,7 @@ function Navigation() {
     { name: 'GTA 5', href: '/shop?game=GTA5' },
     { name: 'GTA 6', href: '/shop?game=GTA6' },
     { name: '3D Models', href: '/shop?game=3D_MODEL' },
+    { name: 'Custom Orders', href: '#custom-orders' },
     { name: 'Blog', href: '/blog' },
     { name: 'Support', href: '/contact' },
   ];
@@ -77,6 +80,17 @@ function Navigation() {
         <nav className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => {
             const isActive = isLinkActive(link.href);
+            if (link.href === '#custom-orders') {
+              return (
+                <button
+                  key={link.name}
+                  onClick={() => setCustomOrdersOpen(true)}
+                  className="text-sm font-medium tracking-wide uppercase transition-colors duration-200 hover:text-brand-green text-gray-400 cursor-pointer"
+                >
+                  {link.name}
+                </button>
+              );
+            }
             return (
               <Link
                 key={link.name}
@@ -189,16 +203,32 @@ function Navigation() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-white/5 bg-brand-bg px-4 py-4 space-y-3">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-sm font-semibold uppercase text-gray-300 hover:text-brand-green"
-            >
-              {link.name}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            if (link.href === '#custom-orders') {
+              return (
+                <button
+                  key={link.name}
+                  onClick={() => {
+                    setCustomOrdersOpen(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left py-2 text-sm font-semibold uppercase text-gray-300 hover:text-brand-green cursor-pointer"
+                >
+                  {link.name}
+                </button>
+              );
+            }
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2 text-sm font-semibold uppercase text-gray-300 hover:text-brand-green"
+              >
+                {link.name}
+              </Link>
+            );
+          })}
           {/* User Auth Section (Mobile) */}
           <div className="border-t border-white/5 pt-4">
             {isAuthenticated ? (
@@ -253,6 +283,49 @@ function Navigation() {
                 </Link>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Custom Orders overlay modal */}
+      {customOrdersOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-lg border border-brand-green/30 bg-brand-card p-6 shadow-2xl space-y-4">
+            <button 
+              onClick={() => setCustomOrdersOpen(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <div className="inline-flex items-center space-x-2 rounded-full bg-brand-green/10 border border-brand-green/20 px-3 py-1 text-[10px] text-brand-green font-bold uppercase tracking-wider">
+              <Sparkles className="h-3 w-3" />
+              <span>Tailored Digital Assets</span>
+            </div>
+
+            <h3 className="font-display text-lg font-black uppercase text-white tracking-wide">
+              Custom 3D Models & Peds
+            </h3>
+            
+            <p className="text-xs text-gray-400 leading-relaxed font-sans">
+              Looking for custom FiveM Peds, optimized vehicle skins, or bespoke 3D buildings and props? We specialize in modeling, texturing, and game-ready optimization tailored to your specifications.
+            </p>
+
+            <div className="rounded bg-black/40 border border-white/5 p-4 space-y-3">
+              <div className="flex items-center justify-between text-xs font-sans">
+                <span className="text-gray-400">Commission Contact:</span>
+                <span className="text-brand-green font-bold select-all font-mono">vasigaming2k23@gmail.com</span>
+              </div>
+              <p className="text-[10px] text-gray-500 leading-normal font-sans">
+                Drop us an email with your asset designs, reference photos, or concept plans, and we will get back to you with a custom quote!
+              </p>
+            </div>
+
+            <a
+              href="mailto:vasigaming2k23@gmail.com?subject=Custom%20Asset%20Commission%20Inquiry"
+              className="w-full flex items-center justify-center space-x-2 rounded bg-brand-green py-2.5 text-xs font-black uppercase text-black tracking-wider hover:bg-opacity-90 transition-all font-display"
+            >
+              <span>Send Commission Email</span>
+            </a>
           </div>
         </div>
       )}
