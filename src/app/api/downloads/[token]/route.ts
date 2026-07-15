@@ -83,7 +83,23 @@ export async function GET(
               if (confirmMatch) {
                 downloadUrl = `https://drive.google.com/uc?export=download&confirm=${confirmMatch[1]}&id=${driveId}`;
               } else {
-                downloadUrl = initialUrl;
+                // If it is an HTML response but no confirmation form or confirm query token is found, it is a hard error
+                if (htmlText.includes('Quota exceeded') || htmlText.includes('too many users')) {
+                  return new Response(
+                    'Error: The download quota for this Google Drive file has been exceeded. Please contact support at vasigaming2k23@gmail.com to request a direct download mirror link.',
+                    { status: 429, headers: { 'Content-Type': 'text/plain' } }
+                  );
+                }
+                if (htmlText.includes('Access Denied') || htmlText.includes('sign in') || htmlText.includes('authorization')) {
+                  return new Response(
+                    'Error: Access restricted on Google Drive. The file sharing permissions must be set to "Anyone with the link" by the owner. Please contact support at vasigaming2k23@gmail.com.',
+                    { status: 403, headers: { 'Content-Type': 'text/plain' } }
+                  );
+                }
+                return new Response(
+                  'Error: Google Drive blocked the direct download. The file is private, deleted, or has exceeded its transfer limits. Please contact support at vasigaming2k23@gmail.com.',
+                  { status: 502, headers: { 'Content-Type': 'text/plain' } }
+                );
               }
             }
           } else {
@@ -110,6 +126,28 @@ export async function GET(
         });
 
         if (response.ok && response.body) {
+          // Double check the final content-type to prevent streaming HTML error pages as ZIP binaries
+          const finalContentType = response.headers.get('Content-Type') || '';
+          if (finalContentType.includes('text/html')) {
+            const htmlContent = await response.text();
+            if (htmlContent.includes('Quota exceeded') || htmlContent.includes('too many users')) {
+              return new Response(
+                'Error: The download quota for this Google Drive file has been exceeded. Please contact support at vasigaming2k23@gmail.com to request an alternative mirror link.',
+                { status: 429, headers: { 'Content-Type': 'text/plain' } }
+              );
+            }
+            if (htmlContent.includes('Access Denied') || htmlContent.includes('sign in') || htmlContent.includes('authorization')) {
+              return new Response(
+                'Error: Access restricted. The owner of the Google Drive link must set the file sharing permissions to "Anyone with the link". Please contact support at vasigaming2k23@gmail.com.',
+                { status: 403, headers: { 'Content-Type': 'text/plain' } }
+              );
+            }
+            return new Response(
+              'Error: The secure asset file is currently offline or unreachable. The download link is dead or restricted. Please contact support at vasigaming2k23@gmail.com.',
+              { status: 502, headers: { 'Content-Type': 'text/plain' } }
+            );
+          }
+
           const headers: any = {
             'Content-Type': 'application/zip',
             'Content-Disposition': `attachment; filename="${filename}"`,
