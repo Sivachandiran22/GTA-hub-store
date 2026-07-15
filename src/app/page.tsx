@@ -204,11 +204,10 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-12 pb-20 pt-6">
-      {/* 1. Hero Info Banner */}
+      {/* 1. Hero Info Banner (Temporarily Hidden)
       <section className="relative overflow-hidden pt-2 pb-2">
         <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(0,255,135,0.08),transparent)]" />
         
-        {/* Glow dots floating ambient banner */}
         <div className="absolute right-1/4 top-1/3 h-72 w-72 rounded-full bg-brand-green/5 blur-3xl animate-pulse-glow" />
         <div className="absolute left-1/4 bottom-1/3 h-64 w-64 rounded-full bg-brand-orange/5 blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }} />
 
@@ -250,6 +249,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      */}
 
       {/* 2. Slidable Featured Hero Panel */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
