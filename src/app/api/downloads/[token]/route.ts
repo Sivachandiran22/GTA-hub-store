@@ -92,12 +92,13 @@ export async function GET(
     if (zipUrl.startsWith('private_uploads/')) {
       const filePath = path.join(process.cwd(), zipUrl);
       if (fs.existsSync(filePath)) {
-        const fileBuffer = fs.readFileSync(filePath);
-        return new Response(fileBuffer, {
+        const fileStream = fs.createReadStream(filePath);
+        const fileStats = fs.statSync(filePath);
+        return new Response(fileStream as any, {
           headers: {
             'Content-Type': 'application/zip',
             'Content-Disposition': `attachment; filename="${filename}"`,
-            'Content-Length': fileBuffer.length.toString(),
+            'Content-Length': fileStats.size.toString(),
             'Cache-Control': 'no-cache',
           },
         });

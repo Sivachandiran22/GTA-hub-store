@@ -37,7 +37,7 @@ export async function POST(
       });
 
       const expiry = new Date();
-      expiry.setHours(expiry.getHours() + 12); // Exactly 12 hours download validity limit
+      expiry.setHours(expiry.getHours() + 6); // Exactly 6 hours download validity limit
 
       for (const item of order.orderItems) {
         await tx.downloadToken.create({

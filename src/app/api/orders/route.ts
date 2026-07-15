@@ -94,9 +94,9 @@ export async function POST(request: Request) {
             data: { downloadsCount: { increment: 1 } },
           });
 
-          // 3. Generate secure download token (expires in 12 hours)
+          // 3. Generate secure download token (expires in 6 hours)
           const expiry = new Date();
-          expiry.setHours(expiry.getHours() + 12);
+          expiry.setHours(expiry.getHours() + 6);
 
           await tx.downloadToken.create({
             data: {

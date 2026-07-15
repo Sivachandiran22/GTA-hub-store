@@ -334,7 +334,7 @@ function Navigation() {
                 <span>Send Email</span>
               </a>
               <a
-                href="https://wa.me/919876543210"
+                href="https://wa.me/918667527400"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center space-x-2 rounded bg-[#25D366] py-2.5 text-xs font-black uppercase text-white tracking-wider hover:bg-opacity-90 transition-all font-display"
