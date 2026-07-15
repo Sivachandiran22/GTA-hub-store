@@ -74,11 +74,15 @@ export default function AdminDashboard() {
   const [formVersion, setFormVersion] = useState('1.0.0');
   const [formSize, setFormSize] = useState('45 MB');
   const [formRequirements, setFormRequirements] = useState('');
-  const [formGuide, setFormGuide] = useState('');
-  const [formZip, setFormZip] = useState('/assets/new_product.zip');
+  const [formGuide, setFormGuide] = useState('All installation instructions are given in the mod zip folder.');
+  const [formZip, setFormZip] = useState('');
   const [formIsFeatured, setFormIsFeatured] = useState(false);
   const [formIsFree, setFormIsFree] = useState(false);
   const [formGame, setFormGame] = useState('GTA5');
+
+  // File upload state variables
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
+  const [zipUploading, setZipUploading] = useState(false);
 
   const [formSuccess, setFormSuccess] = useState(false);
   const [formError, setFormError] = useState('');
@@ -175,7 +179,8 @@ export default function AdminDashboard() {
         setFormPrice('19.99');
         setFormSalePrice('');
         setFormRequirements('');
-        setFormGuide('');
+        setFormGuide('All installation instructions are given in the mod zip folder.');
+        setFormZip('');
         
         // Refresh summary count
         if (summary) {
@@ -270,6 +275,45 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error('Failed to delete product', err);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'thumbnail' | 'zip') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+
+    if (type === 'thumbnail') setThumbnailUploading(true);
+    else setZipUploading(true);
+
+    try {
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (type === 'thumbnail') {
+          setFormThumbnail(data.url);
+        } else {
+          setFormZip(data.url);
+          setFormSize(data.size);
+        }
+      } else {
+        alert(data.message || 'Failed to upload file');
+      }
+    } catch (err) {
+      console.error('Failed to upload file', err);
+      alert('Upload error occurred');
+    } finally {
+      if (type === 'thumbnail') setThumbnailUploading(false);
+      else setZipUploading(false);
     }
   };
 
@@ -593,23 +637,38 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Metadata details (Thumbnail, Size, ZIP path) */}
+                {/* Metadata details (Thumbnail, Size, ZIP path) */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-gray-400">Thumbnail Cover Image Path</label>
-                    <input
-                      type="text"
-                      required
-                      value={formThumbnail}
-                      onChange={(e) => setFormThumbnail(e.target.value)}
-                      className="w-full rounded bg-black/60 border border-white/10 px-3 py-2.5 text-white focus:border-brand-green focus:outline-none font-mono"
-                    />
+                    <label className="text-[10px] font-bold uppercase text-gray-400">Thumbnail Cover Image</label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        required
+                        placeholder="/images/products/vehicle-default.jpg"
+                        value={formThumbnail}
+                        onChange={(e) => setFormThumbnail(e.target.value)}
+                        className="w-full rounded bg-black/60 border border-white/10 px-3 py-2.5 text-[11px] text-white focus:border-brand-green focus:outline-none font-mono"
+                      />
+                      <label className="rounded bg-brand-green px-3 py-2.5 text-[10px] font-bold text-black uppercase cursor-pointer hover:bg-opacity-90 flex-shrink-0 flex items-center justify-center min-w-[70px]">
+                        {thumbnailUploading ? '...' : 'Browse'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={thumbnailUploading}
+                          onChange={(e) => handleFileUpload(e, 'thumbnail')}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-gray-400">Download ZIP Size</label>
+                    <label className="text-[10px] font-bold uppercase text-gray-400">Download ZIP Size (Calculated)</label>
                     <input
                       type="text"
                       required
+                      placeholder="e.g. 45 MB"
                       value={formSize}
                       onChange={(e) => setFormSize(e.target.value)}
                       className="w-full rounded bg-black/60 border border-white/10 px-3 py-2.5 text-white focus:border-brand-green focus:outline-none"
@@ -617,14 +676,27 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-gray-400">Zip asset Path (stored locally/S3)</label>
-                    <input
-                      type="text"
-                      required
-                      value={formZip}
-                      onChange={(e) => setFormZip(e.target.value)}
-                      className="w-full rounded bg-black/60 border border-white/10 px-3 py-2.5 text-white focus:border-brand-green focus:outline-none font-mono"
-                    />
+                    <label className="text-[10px] font-bold uppercase text-gray-400">Secure ZIP File</label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        required
+                        placeholder="private_uploads/..."
+                        value={formZip}
+                        onChange={(e) => setFormZip(e.target.value)}
+                        className="w-full rounded bg-black/60 border border-white/10 px-3 py-2.5 text-[11px] text-white focus:border-brand-green focus:outline-none font-mono"
+                      />
+                      <label className="rounded bg-brand-green px-3 py-2.5 text-[10px] font-bold text-black uppercase cursor-pointer hover:bg-opacity-90 flex-shrink-0 flex items-center justify-center min-w-[70px]">
+                        {zipUploading ? '...' : 'Browse'}
+                        <input
+                          type="file"
+                          accept=".zip"
+                          disabled={zipUploading}
+                          onChange={(e) => handleFileUpload(e, 'zip')}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
                 </div>
 

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET(
   request: Request,
@@ -31,6 +33,23 @@ export async function GET(
     });
 
     const filename = `${downloadToken.product.slug}.zip`;
+    
+    // Check if the zipUrl is a private local upload
+    const zipUrl = downloadToken.product.zipUrl;
+    if (zipUrl.startsWith('private_uploads/')) {
+      const filePath = path.join(process.cwd(), zipUrl);
+      if (fs.existsSync(filePath)) {
+        const fileBuffer = fs.readFileSync(filePath);
+        return new Response(fileBuffer, {
+          headers: {
+            'Content-Type': 'application/zip',
+            'Content-Disposition': `attachment; filename="${filename}"`,
+            'Content-Length': fileBuffer.length.toString(),
+            'Cache-Control': 'no-cache',
+          },
+        });
+      }
+    }
     
     // Serve a valid ZIP buffer dynamically containing a readme file
     const readmeContent = `=== GTA HUB STORE SECURE DIGITAL DELIVERY ===\n\nProduct: ${downloadToken.product.title}\nVersion: ${downloadToken.product.version}\nDownload Date: ${new Date().toISOString()}\nLicense: Single User Personal Use Only\n\nInstallation Requirements:\n${downloadToken.product.requirements || 'None'}\n\nInstallation Guide:\n${downloadToken.product.installationGuide || 'Drop in game folder.'}\n\nThank you for shopping at GTA Hub Store!`;
