@@ -101,7 +101,7 @@ const CATEGORY_THEMES: Record<string, { icon: any; gradient: string; border: str
   }
 };
 
-export const revalidate = 60; // Revalidate page every 60 seconds
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   // Fetch dynamic database counts
