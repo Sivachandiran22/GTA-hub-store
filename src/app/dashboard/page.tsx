@@ -48,6 +48,27 @@ export default function UserDashboard() {
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [tickets, setTickets] = useState<SupportTicketType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(new Date());
+
+  // Real-time ticking interval for live countdowns and dynamic state transitions
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getRemainingTimeStr = (expiresAtStr: string) => {
+    const expiry = new Date(expiresAtStr);
+    const diff = expiry.getTime() - now.getTime();
+    if (diff <= 0) return 'Expired';
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    return `${hours}h ${minutes}m ${seconds}s remaining`;
+  };
 
   // New ticket form states
   const [ticketSubject, setTicketSubject] = useState('');
@@ -167,7 +188,8 @@ export default function UserDashboard() {
         ) : downloads.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
             {downloads.map((item) => {
-              const expired = new Date() > new Date(item.expiresAt);
+              const expired = now > new Date(item.expiresAt);
+              const remainingStr = getRemainingTimeStr(item.expiresAt);
               return (
                 <div
                   key={item.id}
@@ -180,13 +202,13 @@ export default function UserDashboard() {
                     <p className="text-[10px] text-gray-500 mt-1">
                       Version: {item.product.version} | Size: {item.product.downloadSize}
                     </p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">
-                      Expires: {new Date(item.expiresAt).toLocaleString()}
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      Expires: {new Date(item.expiresAt).toLocaleString()} ({expired ? 'Expired' : remainingStr})
                     </p>
                   </div>
                   
                   {expired ? (
-                    <span className="rounded bg-brand-orange/10 border border-brand-orange/20 px-3 py-1 text-[10px] font-bold text-brand-orange uppercase">
+                    <span className="rounded bg-red-500/10 border border-red-500/25 px-3 py-1 text-[10px] font-bold text-red-400 uppercase select-none">
                       Link Expired
                     </span>
                   ) : (
