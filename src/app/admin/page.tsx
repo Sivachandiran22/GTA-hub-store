@@ -88,6 +88,7 @@ export default function AdminDashboard() {
 
   const [formSuccess, setFormSuccess] = useState(false);
   const [formError, setFormError] = useState('');
+  const [editingSlug, setEditingSlug] = useState<string | null>(null);
 
   // Fetch admin telemetry
   useEffect(() => {
@@ -137,15 +138,66 @@ export default function AdminDashboard() {
     setFormSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
   };
 
+  const handleStartEditProduct = (p: any) => {
+    setFormTitle(p.title);
+    setFormSlug(p.slug);
+    setFormShortDesc(p.shortDescription || '');
+    setFormLongDesc(p.longDescription || '');
+    setFormPrice(p.price.toString());
+    setFormSalePrice(p.salePrice ? p.salePrice.toString() : '');
+    setFormCategory(p.categoryId);
+    setFormThumbnail(p.thumbnailUrl || '/images/products/vehicle-default.jpg');
+    setFormVersion(p.version || '1.0.0');
+    setFormSize(p.downloadSize || '45 MB');
+    setFormRequirements(p.requirements || '');
+    setFormGuide(p.installationGuide || '');
+    setFormIsFeatured(p.isFeatured || false);
+    setFormIsFree(p.isFree || false);
+    setFormGame(p.game || 'GTA5');
+    setFormZip(p.zipUrl || '');
+    
+    setEditingSlug(p.slug);
+    setActiveSubTab('add-product');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEditOrDiscardDraft = () => {
+    setEditingSlug(null);
+    setFormTitle('');
+    setFormSlug('');
+    setFormShortDesc('');
+    setFormLongDesc('');
+    setFormPrice('19.99');
+    setFormSalePrice('');
+    setFormRequirements('');
+    setFormGuide('All installation instructions are given in the mod zip folder.');
+    setFormZip('');
+    setFormThumbnail('/images/products/vehicle-default.jpg');
+    setFormVersion('1.0.0');
+    setFormSize('45 MB');
+    setFormIsFeatured(false);
+    setFormIsFree(false);
+    setFormGame('GTA5');
+    
+    localStorage.removeItem('gta_hub_admin_draft');
+    setFormSuccess(false);
+    setFormError('');
+    setActiveSubTab('manage-products');
+  };
+
   const handleCreateProductSubmit = async (e: React.FormEvent, makeVisible: boolean) => {
     e.preventDefault();
+    const targetPrice = formIsFree ? 0 : parseFloat(formPrice);
     if (formIsFree) setFormPrice('0.00');
     setFormError('');
     setFormSuccess(false);
 
     try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
+      const url = editingSlug ? `/api/products/${editingSlug}` : '/api/products';
+      const method = editingSlug ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
@@ -155,7 +207,7 @@ export default function AdminDashboard() {
           slug: formSlug,
           shortDescription: formShortDesc,
           longDescription: formLongDesc,
-          price: parseFloat(formPrice),
+          price: targetPrice,
           salePrice: formSalePrice ? parseFloat(formSalePrice) : null,
           categoryId: formCategory,
           thumbnailUrl: formThumbnail,
@@ -174,8 +226,11 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (res.ok) {
         setFormSuccess(true);
-        // Clear saved draft from localStorage
-        localStorage.removeItem('gta_hub_admin_draft');
+        if (editingSlug) {
+          setEditingSlug(null);
+        } else {
+          localStorage.removeItem('gta_hub_admin_draft');
+        }
 
         // Reset form fields
         setFormTitle('');
@@ -194,15 +249,37 @@ export default function AdminDashboard() {
         setFormIsFree(false);
         setFormGame('GTA5');
         
-        // Refresh summary count
-        if (summary) {
-          setSummary({
-            ...summary,
-            totalProducts: summary.totalProducts + 1
-          });
+        // Refresh catalog lists
+        const catRes = await fetch('/api/products');
+        const catData = await catRes.json();
+        if (catRes.ok) {
+          setCategories(catData.categories || []);
+        }
+        
+        const prodRes = await fetch('/api/products?showHidden=true');
+        const prodData = await prodRes.json();
+        if (prodRes.ok) {
+          setManageProductsList(prodData.products || []);
+        }
+
+        const anaRes = await fetch('/api/admin/analytics', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const anaData = await anaRes.json();
+        if (anaRes.ok) {
+          setSummary(anaData.summary);
+          setRecentOrders(anaData.recentOrders || []);
+          setTopProducts(anaData.topProducts || []);
+        }
+
+        if (method === 'PATCH') {
+          setTimeout(() => {
+            setActiveSubTab('manage-products');
+            setFormSuccess(false);
+          }, 1500);
         }
       } else {
-        setFormError(data.message || 'Failed to create product');
+        setFormError(data.message || 'Action failed');
       }
     } catch (err) {
       setFormError('Connection error occurred');
@@ -677,7 +754,7 @@ export default function AdminDashboard() {
             <div className="rounded-lg bg-brand-card border border-white/5 p-6 max-w-3xl mx-auto space-y-6">
               <h2 className="font-display text-sm font-bold uppercase text-white tracking-wider flex items-center space-x-1.5 border-b border-white/5 pb-3">
                 <PlusCircle className="h-4 w-4 text-brand-green" />
-                <span>Upload Mod Asset to Database</span>
+                <span>{editingSlug ? `Edit Modification: ${formTitle}` : 'Upload Mod Asset to Database'}</span>
               </h2>
 
               <form onSubmit={(e) => handleCreateProductSubmit(e, true)} className="space-y-4 text-xs">
@@ -919,21 +996,23 @@ export default function AdminDashboard() {
                     type="submit"
                     className="rounded bg-brand-green px-6 py-3 text-xs font-black uppercase text-black tracking-wider shadow-md hover:bg-opacity-95"
                   >
-                    Publish Mod to Store
+                    {editingSlug ? 'Update Mod' : 'Publish Mod to Store'}
                   </button>
+                  {!editingSlug && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleCreateProductSubmit(e, false)}
+                      className="rounded bg-brand-orange px-6 py-3 text-xs font-black uppercase text-white tracking-wider shadow-md hover:bg-opacity-95"
+                    >
+                      Save as Draft
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={(e) => handleCreateProductSubmit(e, false)}
-                    className="rounded bg-brand-orange px-6 py-3 text-xs font-black uppercase text-white tracking-wider shadow-md hover:bg-opacity-95"
-                  >
-                    Save as Draft
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleClearDraft}
+                    onClick={handleCancelEditOrDiscardDraft}
                     className="rounded border border-white/10 bg-transparent px-6 py-3 text-xs font-black uppercase text-gray-400 hover:bg-white/5"
                   >
-                    Discard Draft
+                    {editingSlug ? 'Cancel Edit' : 'Discard Draft'}
                   </button>
                 </div>
               </form>
@@ -1020,7 +1099,13 @@ export default function AdminDashboard() {
                               {p.isVisible ? 'Visible' : 'Hidden'}
                             </button>
                           </td>
-                          <td className="p-4 text-right">
+                          <td className="p-4 text-right flex items-center justify-end space-x-2">
+                            <button
+                              onClick={() => handleStartEditProduct(p)}
+                              className="rounded bg-brand-green/10 border border-brand-green/20 px-3 py-1.5 text-[10px] font-bold uppercase text-brand-green hover:bg-brand-green hover:text-black hover:border-transparent hover:scale-105 hover:shadow-md hover:shadow-brand-green/20 transition-all duration-200"
+                            >
+                              Edit
+                            </button>
                             <button
                               onClick={() => handleDeleteProduct(p.slug)}
                               className="rounded bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-[10px] font-bold uppercase text-red-400 hover:bg-red-600 hover:text-white hover:border-transparent hover:scale-105 hover:shadow-md hover:shadow-red-500/20 transition-all duration-200"

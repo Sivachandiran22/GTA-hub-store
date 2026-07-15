@@ -105,10 +105,23 @@ export async function PATCH(
 
     // Unpack fields we want to update
     const data: any = {};
+    if (body.title !== undefined) data.title = body.title;
+    if (body.slug !== undefined) data.slug = body.slug;
+    if (body.shortDescription !== undefined) data.shortDescription = body.shortDescription;
+    if (body.longDescription !== undefined) data.longDescription = body.longDescription;
     if (body.price !== undefined) data.price = parseFloat(body.price);
     if (body.salePrice !== undefined) data.salePrice = body.salePrice ? parseFloat(body.salePrice) : null;
-    if (body.isVisible !== undefined) data.isVisible = !!body.isVisible;
+    if (body.categoryId !== undefined) data.categoryId = body.categoryId;
+    if (body.thumbnailUrl !== undefined) data.thumbnailUrl = body.thumbnailUrl;
+    if (body.version !== undefined) data.version = body.version;
+    if (body.downloadSize !== undefined) data.downloadSize = body.downloadSize;
+    if (body.requirements !== undefined) data.requirements = body.requirements;
+    if (body.installationGuide !== undefined) data.installationGuide = body.installationGuide;
     if (body.isFeatured !== undefined) data.isFeatured = !!body.isFeatured;
+    if (body.isFree !== undefined) data.isFree = !!body.isFree;
+    if (body.isVisible !== undefined) data.isVisible = !!body.isVisible;
+    if (body.game !== undefined) data.game = body.game;
+    if (body.zipUrl !== undefined) data.zipUrl = body.zipUrl;
 
     const updated = await prisma.product.update({
       where: { slug },
