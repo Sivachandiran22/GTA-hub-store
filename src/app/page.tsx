@@ -13,8 +13,93 @@ import {
   Cpu, 
   ShieldCheck, 
   Zap, 
-  Users 
+  Users,
+  Box,
+  Home,
+  Shirt,
+  Car,
+  Code
 } from 'lucide-react';
+
+const CATEGORY_THEMES: Record<string, { icon: any; gradient: string; border: string; textColor: string; glowColor: string }> = {
+  props: {
+    icon: Box,
+    gradient: 'from-blue-500/10 to-indigo-500/5 hover:from-blue-500/20 hover:to-indigo-500/10',
+    border: 'border-blue-500/10 hover:border-blue-500/30',
+    textColor: 'text-blue-400 group-hover:text-blue-200',
+    glowColor: 'bg-blue-500/25'
+  },
+  'free-downloads': {
+    icon: Gift,
+    gradient: 'from-emerald-500/10 to-teal-500/5 hover:from-emerald-500/20 hover:to-teal-500/10',
+    border: 'border-emerald-500/10 hover:border-emerald-500/30',
+    textColor: 'text-emerald-400 group-hover:text-emerald-200',
+    glowColor: 'bg-emerald-500/25'
+  },
+  free: {
+    icon: Gift,
+    gradient: 'from-emerald-500/10 to-teal-500/5 hover:from-emerald-500/20 hover:to-teal-500/10',
+    border: 'border-emerald-500/10 hover:border-emerald-500/30',
+    textColor: 'text-emerald-400 group-hover:text-emerald-200',
+    glowColor: 'bg-emerald-500/25'
+  },
+  mlo: {
+    icon: Home,
+    gradient: 'from-amber-500/10 to-orange-500/5 hover:from-amber-500/20 hover:to-orange-500/10',
+    border: 'border-amber-500/10 hover:border-amber-500/30',
+    textColor: 'text-amber-400 group-hover:text-amber-200',
+    glowColor: 'bg-amber-500/25'
+  },
+  clothing: {
+    icon: Shirt,
+    gradient: 'from-purple-500/10 to-pink-500/5 hover:from-purple-500/20 hover:to-purple-500/10',
+    border: 'border-purple-500/10 hover:border-purple-500/30',
+    textColor: 'text-purple-400 group-hover:text-purple-200',
+    glowColor: 'bg-purple-500/25'
+  },
+  clothes: {
+    icon: Shirt,
+    gradient: 'from-purple-500/10 to-pink-500/5 hover:from-purple-500/20 hover:to-purple-500/10',
+    border: 'border-purple-500/10 hover:border-purple-500/30',
+    textColor: 'text-purple-400 group-hover:text-purple-200',
+    glowColor: 'bg-purple-500/25'
+  },
+  vehicles: {
+    icon: Car,
+    gradient: 'from-red-500/10 to-rose-500/5 hover:from-red-500/20 hover:to-rose-500/10',
+    border: 'border-red-500/10 hover:border-red-500/30',
+    textColor: 'text-red-400 group-hover:text-red-200',
+    glowColor: 'bg-red-500/25'
+  },
+  cars: {
+    icon: Car,
+    gradient: 'from-red-500/10 to-rose-500/5 hover:from-red-500/20 hover:to-rose-500/10',
+    border: 'border-red-500/10 hover:border-red-500/30',
+    textColor: 'text-red-400 group-hover:text-red-200',
+    glowColor: 'bg-red-500/25'
+  },
+  scripts: {
+    icon: Code,
+    gradient: 'from-cyan-500/10 to-blue-500/5 hover:from-cyan-500/20 hover:to-blue-500/10',
+    border: 'border-cyan-500/10 hover:border-cyan-500/30',
+    textColor: 'text-cyan-400 group-hover:text-cyan-200',
+    glowColor: 'bg-cyan-500/25'
+  },
+  peds: {
+    icon: Users,
+    gradient: 'from-indigo-500/10 to-violet-500/5 hover:from-indigo-500/20 hover:to-violet-500/10',
+    border: 'border-indigo-500/10 hover:border-indigo-500/30',
+    textColor: 'text-indigo-400 group-hover:text-indigo-200',
+    glowColor: 'bg-indigo-500/25'
+  },
+  ped: {
+    icon: Users,
+    gradient: 'from-indigo-500/10 to-violet-500/5 hover:from-indigo-500/20 hover:to-violet-500/10',
+    border: 'border-indigo-500/10 hover:border-indigo-500/30',
+    textColor: 'text-indigo-400 group-hover:text-indigo-200',
+    glowColor: 'bg-indigo-500/25'
+  }
+};
 
 export const revalidate = 60; // Revalidate page every 60 seconds
 
@@ -197,21 +282,43 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/shop?category=${cat.slug}`}
-              className="group rounded-lg bg-brand-card/50 border border-white/5 p-4 text-center hover:border-brand-green/20 hover:bg-brand-card transition-all"
-            >
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded bg-white/5 group-hover:bg-brand-green/10 transition-colors mb-3 text-brand-green text-sm font-bold font-display uppercase">
-                {cat.slug.slice(0, 3)}
-              </div>
-              <h3 className="font-display font-bold text-xs text-white group-hover:text-brand-green transition-colors">
-                {cat.name}
-              </h3>
-              <p className="text-[10px] text-gray-500 mt-1">{cat._count?.products || 0} Mods</p>
-            </Link>
-          ))}
+          {categories.map((cat) => {
+            const theme = CATEGORY_THEMES[cat.slug] || {
+              icon: HelpCircle,
+              gradient: 'from-gray-500/10 to-slate-500/5 hover:from-gray-500/20 hover:to-slate-500/10',
+              border: 'border-white/5 hover:border-white/20',
+              textColor: 'text-gray-400 group-hover:text-white',
+              glowColor: 'bg-white/5'
+            };
+            const IconComponent = theme.icon;
+
+            return (
+              <Link
+                key={cat.id}
+                href={`/shop?category=${cat.slug}`}
+                className={`group relative overflow-hidden rounded-xl bg-gradient-to-br ${theme.gradient} border ${theme.border} p-5 text-center transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-black/50`}
+              >
+                {/* Background overlay */}
+                <div className="absolute inset-0 bg-black/55 group-hover:bg-black/30 transition-colors -z-10" />
+
+                {/* Themed Icon Box */}
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-black/50 border border-white/10 group-hover:border-transparent transition-all duration-300 mb-3.5 relative shadow-inner shadow-black/80">
+                  <IconComponent className={`h-6 w-6 ${theme.textColor} group-hover:scale-115 transition-all duration-300 z-10`} />
+                  
+                  {/* Glowing background inside icon box */}
+                  <div className={`absolute inset-0 rounded-lg ${theme.glowColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-0`} />
+                </div>
+
+                <h3 className="font-display font-black text-xs uppercase tracking-wider text-white transition-colors">
+                  {cat.name}
+                </h3>
+                
+                <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-1.5">
+                  {cat._count?.products || 0} {cat._count?.products === 1 ? 'Mod' : 'Mods'}
+                </p>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
