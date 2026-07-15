@@ -162,6 +162,25 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* 2.5. More Featured Releases */}
+      {featuredProducts.length > 1 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-display text-xl md:text-2xl font-extrabold uppercase text-white tracking-wide">
+                More Featured Releases
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">Handpicked top performance mods from our catalog</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {featuredProducts.slice(1).map((p) => (
+              <ProductCard key={p.id} product={p as any} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* 3. Featured Categories */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex items-center justify-between">

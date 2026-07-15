@@ -132,6 +132,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
+    const existingProduct = await prisma.product.findUnique({
+      where: { slug }
+    });
+    if (existingProduct) {
+      return NextResponse.json({ message: 'A product with this URL slug already exists.' }, { status: 400 });
+    }
+
     const product = await prisma.product.create({
       data: {
         title,

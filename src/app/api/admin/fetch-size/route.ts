@@ -23,6 +23,10 @@ export async function GET(request: Request) {
       }
     });
 
+    if (response.status === 404 || response.status === 403) {
+      return NextResponse.json({ error: 'The secure link is dead or private (404/403). Ensure the Google Drive file is shared as "Anyone with the link can view"!' }, { status: 400 });
+    }
+
     let contentLength = response.headers.get('content-length');
 
     // If HEAD request yielded no length (often due to redirects or CDNs), perform GET
@@ -33,6 +37,10 @@ export async function GET(request: Request) {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         }
       });
+
+      if (getRes.status === 404 || getRes.status === 403) {
+        return NextResponse.json({ error: 'The secure link is dead or private (404/403). Ensure the Google Drive file is shared as "Anyone with the link can view"!' }, { status: 400 });
+      }
       contentLength = getRes.headers.get('content-length');
     }
 

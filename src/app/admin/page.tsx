@@ -535,8 +535,13 @@ export default function AdminDashboard() {
         try {
           const res = await fetch(`/api/admin/fetch-size?url=${encodeURIComponent(formZip)}`);
           const data = await res.json();
-          if (data.size) {
-            setFormSize(data.size);
+          if (res.ok) {
+            if (data.size) {
+              setFormSize(data.size);
+            }
+            setFormError('');
+          } else {
+            setFormError(data.error || 'The secure file link could not be validated. Make sure the file sharing is public!');
           }
         } catch (err) {
           console.error('Failed to auto-fetch file size', err);
@@ -996,17 +1001,15 @@ export default function AdminDashboard() {
                     type="submit"
                     className="rounded bg-brand-green px-6 py-3 text-xs font-black uppercase text-black tracking-wider shadow-md hover:bg-opacity-95"
                   >
-                    {editingSlug ? 'Update Mod' : 'Publish Mod to Store'}
+                    {editingSlug ? 'Update & Publish' : 'Publish Mod to Store'}
                   </button>
-                  {!editingSlug && (
-                    <button
-                      type="button"
-                      onClick={(e) => handleCreateProductSubmit(e, false)}
-                      className="rounded bg-brand-orange px-6 py-3 text-xs font-black uppercase text-white tracking-wider shadow-md hover:bg-opacity-95"
-                    >
-                      Save as Draft
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => handleCreateProductSubmit(e, false)}
+                    className="rounded bg-brand-orange px-6 py-3 text-xs font-black uppercase text-white tracking-wider shadow-md hover:bg-opacity-95"
+                  >
+                    Save as Draft
+                  </button>
                   <button
                     type="button"
                     onClick={handleCancelEditOrDiscardDraft}

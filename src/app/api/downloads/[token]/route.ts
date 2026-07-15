@@ -120,10 +120,15 @@ export async function GET(
             headers['Content-Length'] = contentLength;
           }
           return new Response(response.body, { headers });
+        } else {
+          throw new Error(`Google Drive returned status ${response.status}`);
         }
       } catch (err) {
-        console.error('Remote zip proxy stream failed, falling back to direct redirect:', err);
-        return NextResponse.redirect(zipUrl);
+        console.error('Remote zip proxy stream failed:', err);
+        return new Response(
+          'Error: The secure asset file is currently offline or unreachable. The download link is dead or restricted. Please contact support at vasigaming2k23@gmail.com.',
+          { status: 502, headers: { 'Content-Type': 'text/plain' } }
+        );
       }
     }
 
