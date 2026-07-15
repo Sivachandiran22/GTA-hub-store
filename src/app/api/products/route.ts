@@ -12,8 +12,13 @@ export async function GET(request: Request) {
     const type = searchParams.get('type') || 'all'; // 'all', 'free', 'paid'
     const game = searchParams.get('game');
     
+    const showHidden = searchParams.get('showHidden') === 'true';
+    
     // Build where clause
-    const where: any = { isVisible: true };
+    const where: any = {};
+    if (!showHidden) {
+      where.isVisible = true;
+    }
     
     if (game && game !== 'all') {
       where.game = game;

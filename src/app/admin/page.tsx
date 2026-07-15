@@ -51,12 +51,16 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { user, isAuthenticated, isAdmin, token, loading: authLoading } = useAuth();
 
-  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'add-product'>('analytics');
+  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'add-product' | 'manage-products'>('analytics');
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<TelemetrySummary | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrderType[]>([]);
   const [topProducts, setTopProducts] = useState<TopProductType[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
+
+  // Manage Products State
+  const [manageProductsList, setManageProductsList] = useState<any[]>([]);
+  const [manageLoading, setManageLoading] = useState(false);
 
   // Add Product Form State
   const [formTitle, setFormTitle] = useState('');
@@ -188,6 +192,93 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchManageProducts = async () => {
+    setManageLoading(true);
+    try {
+      const res = await fetch('/api/products?showHidden=true');
+      const data = await res.json();
+      if (res.ok) {
+        setManageProductsList(data.products || []);
+      }
+    } catch (err) {
+      console.error('Failed to load products for management', err);
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
+  const handleToggleVisibility = async (slug: string, currentVal: boolean) => {
+    try {
+      const res = await fetch(`/api/products/${slug}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ isVisible: !currentVal })
+      });
+      if (res.ok) {
+        setManageProductsList(prev =>
+          prev.map(p => (p.slug === slug ? { ...p, isVisible: !currentVal } : p))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to toggle product visibility', err);
+    }
+  };
+
+  const handleToggleFeatured = async (slug: string, currentVal: boolean) => {
+    try {
+      const res = await fetch(`/api/products/${slug}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ isFeatured: !currentVal })
+      });
+      if (res.ok) {
+        setManageProductsList(prev =>
+          prev.map(p => (p.slug === slug ? { ...p, isFeatured: !currentVal } : p))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to toggle product featured status', err);
+    }
+  };
+
+  const handleDeleteProduct = async (slug: string) => {
+    if (!window.confirm('Are you sure you want to permanently delete this product? This will remove all associated downloads and reviews.')) return;
+    try {
+      const res = await fetch(`/api/products/${slug}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        setManageProductsList(prev => prev.filter(p => p.slug !== slug));
+        if (summary) {
+          setSummary({
+            ...summary,
+            totalProducts: Math.max(0, summary.totalProducts - 1)
+          });
+        }
+      } else {
+        const data = await res.json();
+        alert(data.message || 'Failed to delete product');
+      }
+    } catch (err) {
+      console.error('Failed to delete product', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSubTab === 'manage-products' && token) {
+      fetchManageProducts();
+    }
+  }, [activeSubTab, token]);
+
   if (authLoading || !isAuthenticated || !isAdmin) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-20 text-center text-xs text-gray-500 uppercase tracking-widest">
@@ -232,6 +323,16 @@ export default function AdminDashboard() {
             }`}
           >
             Upload Mod Asset
+          </button>
+          <button
+            onClick={() => setActiveSubTab('manage-products')}
+            className={`rounded px-4 py-2 transition-all ${
+              activeSubTab === 'manage-products'
+                ? 'bg-brand-green text-black'
+                : 'bg-white/5 text-gray-400 hover:text-white'
+            }`}
+          >
+            Manage Products
           </button>
         </div>
       </div>
@@ -547,6 +648,107 @@ export default function AdminDashboard() {
                   Publish Mod to Store
                 </button>
               </form>
+            </div>
+          )}
+
+          {/* Manage Products Sub Tab */}
+          {activeSubTab === 'manage-products' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                <h2 className="font-display text-sm font-bold uppercase text-white tracking-wider flex items-center space-x-1.5">
+                  <Package className="h-4 w-4 text-brand-green" />
+                  <span>Manage Catalog Modifications</span>
+                </h2>
+                <button
+                  onClick={fetchManageProducts}
+                  className="rounded bg-white/5 border border-white/10 px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-all uppercase font-bold"
+                >
+                  Refresh Catalog
+                </button>
+              </div>
+
+              {manageLoading ? (
+                <div className="text-center py-12 text-xs text-gray-500 uppercase tracking-widest animate-pulse">
+                  Querying database...
+                </div>
+              ) : manageProductsList.length > 0 ? (
+                <div className="overflow-x-auto rounded-lg border border-white/5 bg-brand-card/45 text-xs">
+                  <table className="w-full border-collapse text-left">
+                    <thead>
+                      <tr className="border-b border-white/5 bg-black/40 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        <th className="p-4">Asset Title</th>
+                        <th className="p-4">Category</th>
+                        <th className="p-4">Game Segment</th>
+                        <th className="p-4">Price</th>
+                        <th className="p-4">Featured</th>
+                        <th className="p-4">Visible</th>
+                        <th className="p-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 text-gray-300">
+                      {manageProductsList.map((p) => (
+                        <tr key={p.id} className="hover:bg-white/5">
+                          <td className="p-4">
+                            <p className="font-bold text-white">{p.title}</p>
+                            <p className="text-[10px] text-gray-500 mt-0.5 font-mono">{p.slug}</p>
+                          </td>
+                          <td className="p-4 uppercase font-bold text-gray-400 text-[10px]">
+                            {p.category?.name || 'Unassigned'}
+                          </td>
+                          <td className="p-4 font-bold text-[10px]">
+                            <span className={`px-1.5 py-0.5 rounded ${
+                              p.game === '3D_MODEL'
+                                ? 'bg-brand-orange/15 text-brand-orange border border-brand-orange/20'
+                                : 'bg-brand-green/15 text-brand-green border border-brand-green/20'
+                            }`}>
+                              {p.game === '3D_MODEL' ? '3D Model' : 'GTA Mod'}
+                            </span>
+                          </td>
+                          <td className="p-4 font-mono font-bold text-white">
+                            {p.isFree ? 'FREE' : `$${p.price.toFixed(2)}`}
+                          </td>
+                          <td className="p-4">
+                            <button
+                              onClick={() => handleToggleFeatured(p.slug, p.isFeatured)}
+                              className={`rounded px-2.5 py-1 text-[10px] font-bold uppercase transition-all ${
+                                p.isFeatured
+                                  ? 'bg-brand-orange/15 border border-brand-orange/30 text-brand-orange'
+                                  : 'bg-white/5 text-gray-500 hover:text-white'
+                              }`}
+                            >
+                              {p.isFeatured ? 'Featured' : 'Standard'}
+                            </button>
+                          </td>
+                          <td className="p-4">
+                            <button
+                              onClick={() => handleToggleVisibility(p.slug, p.isVisible)}
+                              className={`rounded px-2.5 py-1 text-[10px] font-bold uppercase transition-all ${
+                                p.isVisible
+                                  ? 'bg-brand-green/15 border border-brand-green/30 text-brand-green'
+                                  : 'bg-red-500/10 border border-red-500/25 text-red-400'
+                              }`}
+                            >
+                              {p.isVisible ? 'Visible' : 'Hidden'}
+                            </button>
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => handleDeleteProduct(p.slug)}
+                              className="rounded bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-[10px] font-bold uppercase text-red-400 hover:bg-red-500/20 transition-all"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 italic py-8 text-center bg-brand-card/25 rounded border border-white/5">
+                  No products registered in the database yet.
+                </p>
+              )}
             </div>
           )}
         </>
