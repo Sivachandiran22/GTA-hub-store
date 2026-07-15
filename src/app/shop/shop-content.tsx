@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import ProductCard from '@/components/product-card';
 import { Search, SlidersHorizontal, Check, RefreshCw, X, Sparkles } from 'lucide-react';
 
@@ -153,16 +154,16 @@ export default function ShopContent() {
       {/* Game Tabs */}
       <div className="flex border-b border-white/5 mb-8 text-xs font-bold uppercase tracking-wider gap-6">
         {[
-          { id: 'GTA5', label: 'GTA V Mods' },
-          { id: 'GTA6', label: 'GTA VI Mods' },
-          { id: '3D_MODEL', label: '3D Models' }
+          { id: 'GTA5', label: 'GTA V Mods', href: '/shop?game=GTA5' },
+          { id: 'GTA6', label: 'GTA VI Mods', href: '/shop?game=GTA6' },
+          { id: '3D_MODEL', label: '3D Models', href: '/shop?game=3D_MODEL' }
         ].map((tab) => {
           const isActive = activeGame === tab.id;
           const isComingSoon = tab.id === 'GTA6';
           return (
-            <button
+            <Link
               key={tab.id}
-              onClick={() => updateQueries({ game: tab.id, category: 'all' })}
+              href={tab.href}
               className={`pb-3 transition-colors duration-200 border-b-2 -mb-[2px] flex items-center space-x-1.5 ${
                 isActive
                   ? 'border-brand-green text-brand-green font-black'
@@ -175,7 +176,7 @@ export default function ShopContent() {
                   soon
                 </span>
               )}
-            </button>
+            </Link>
           );
         })}
       </div>
