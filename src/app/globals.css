@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Russo+One&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 @import "tailwindcss";
 
 @theme {
   --font-sans: 'Inter', sans-serif;
-  --font-display: 'Outfit', sans-serif;
+  --font-display: 'Russo One', 'Outfit', sans-serif;
   
-  --color-brand-bg: #0a0a0c;
-  --color-brand-card: #141418;
+  --color-brand-bg: #070709;
+  --color-brand-card: #0e0e12;
   --color-brand-green: #00ff87;
   --color-brand-green-glow: rgba(0, 255, 135, 0.15);
   --color-brand-orange: #ff5f00;
@@ -15,7 +15,7 @@
 }
 
 :root {
-  --background: #0a0a0c;
+  --background: #070709;
   --foreground: #f3f4f6;
   --primary: #00ff87;
   --secondary: #ff5f00;
@@ -23,6 +23,10 @@
 
 body {
   background-color: var(--background);
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(0, 255, 135, 0.06), transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(255, 95, 0, 0.03), transparent 50%);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans);
   overflow-x: hidden;
@@ -113,3 +117,50 @@ body {
   border-color: #00ff87;
   transform: translateY(-2px);
 }
+
+/* GTA V Carbon fiber background mesh pattern */
+.bg-gta-carbon {
+  background-color: #0d0d11;
+  background-image: 
+    linear-gradient(45deg, #07070a 25%, transparent 25%), 
+    linear-gradient(-45deg, #07070a 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, #07070a 75%), 
+    linear-gradient(-45deg, transparent 75%, #07070a 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+}
+
+/* GTA V Hazard stripes */
+.gta-hazard-green {
+  background: repeating-linear-gradient(
+    -45deg,
+    #00ff87,
+    #00ff87 10px,
+    #000000 10px,
+    #000000 20px
+  );
+}
+
+.gta-hazard-orange {
+  background: repeating-linear-gradient(
+    -45deg,
+    #ff5f00,
+    #ff5f00 10px,
+    #000000 10px,
+    #000000 20px
+  );
+}
+
+/* GTA mission passed arcade style neon shadow */
+.gta-mission-passed {
+  font-family: 'Russo One', sans-serif;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 8px rgba(0, 255, 135, 0.6), 0 0 20px rgba(0, 255, 135, 0.2);
+}
+
+/* scanlines CRT gaming overlay */
+.gta-gaming-scanlines {
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+  background-size: 100% 4px, 6px 100%;
+}
+

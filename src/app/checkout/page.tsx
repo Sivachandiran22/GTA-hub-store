@@ -122,11 +122,15 @@ export default function CheckoutPage() {
             <CheckCircle2 className="h-10 w-10" />
           </div>
           
-          <div className="space-y-2">
-            <h1 className="font-display text-2xl font-black uppercase text-white tracking-wider">
-              {isPending ? 'Payment Awaiting Verification!' : 'Purchase Complete!'}
-            </h1>
-            <p className="text-xs text-gray-400">
+          <div className="space-y-4">
+            <div className={`py-4 border-y ${isPending ? 'border-brand-orange/20' : 'border-brand-green/20'} bg-black/60 my-2 relative overflow-hidden`}>
+              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${isPending ? 'bg-brand-orange' : 'bg-brand-green'}`} />
+              <div className={`absolute right-0 top-0 bottom-0 w-1.5 ${isPending ? 'bg-brand-orange' : 'bg-brand-green'}`} />
+              <h1 className={`gta-mission-passed text-2xl sm:text-3xl font-black uppercase tracking-widest text-center ${isPending ? 'text-brand-orange text-shadow-orange' : 'text-brand-green'}`}>
+                {isPending ? 'PENDING APPROVAL' : 'PAYMENT PASSED'}
+              </h1>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
               {isPending 
                 ? 'Your order reference has been submitted. Our team will verify the payment shortly.' 
                 : 'Your order has been paid. Digital assets are ready to use.'}
