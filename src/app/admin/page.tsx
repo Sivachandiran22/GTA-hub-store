@@ -90,6 +90,12 @@ export default function AdminDashboard() {
   const [formError, setFormError] = useState('');
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
 
+  // Order management states
+  const [denyingOrderId, setDenyingOrderId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('Your transaction ID is invalid. Please check and submit the correct payment reference.');
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editingTxId, setEditingTxId] = useState('');
+
   // Fetch admin telemetry
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || !isAdmin)) {
@@ -470,6 +476,100 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDenyOrder = async (orderId: string, reason: string) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRecentOrders(prev =>
+          prev.map(o => (o.id === orderId ? { ...o, status: 'CANCELLED', rejectionReason: reason } : o))
+        );
+        setDenyingOrderId(null);
+        alert('Order has been rejected/denied. The customer has been notified with your reason.');
+        
+        const refreshRes = await fetch('/api/admin/analytics', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const refreshData = await refreshRes.json();
+        if (refreshRes.ok) {
+          setSummary(refreshData.summary);
+        }
+      } else {
+        alert(data.message || 'Failed to reject order');
+      }
+    } catch (err) {
+      console.error('Failed to reject order', err);
+      alert('Connection error occurred');
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!window.confirm('Are you sure you want to cancel this order? This will mark the order as CANCELLED.')) return;
+    try {
+      const res = await fetch(`/api/orders/${orderId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason: 'Order cancelled by Administrator' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRecentOrders(prev =>
+          prev.map(o => (o.id === orderId ? { ...o, status: 'CANCELLED', rejectionReason: 'Order cancelled by Administrator' } : o))
+        );
+        alert('Order successfully cancelled.');
+        
+        const refreshRes = await fetch('/api/admin/analytics', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const refreshData = await refreshRes.json();
+        if (refreshRes.ok) {
+          setSummary(refreshData.summary);
+        }
+      } else {
+        alert(data.message || 'Failed to cancel order');
+      }
+    } catch (err) {
+      console.error('Failed to cancel order', err);
+      alert('Connection error occurred');
+    }
+  };
+
+  const handleUpdateOrderTxId = async (orderId: string, transactionId: string) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/update-txid`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ transactionId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRecentOrders(prev =>
+          prev.map(o => (o.id === orderId ? { ...o, paymentIntentId: transactionId } : o))
+        );
+        setEditingOrderId(null);
+        alert('Transaction Reference (UTR/TxID) updated successfully!');
+      } else {
+        alert(data.message || 'Failed to update transaction ID');
+      }
+    } catch (err) {
+      console.error('Failed to update transaction ID', err);
+      alert('Connection error occurred');
+    }
+  };
+
   // Load draft from localStorage on mount
   useEffect(() => {
     try {
@@ -702,19 +802,49 @@ export default function AdminDashboard() {
                                 <span className={`rounded px-2 py-0.5 text-[9px] font-bold uppercase ${
                                   o.status === 'COMPLETED'
                                     ? 'bg-brand-green/10 border border-brand-green/20 text-brand-green'
+                                    : o.status === 'CANCELLED'
+                                    ? 'bg-red-500/10 border border-red-500/20 text-red-400'
                                     : 'bg-brand-orange/15 border border-brand-orange/25 text-brand-orange animate-pulse'
                                 }`}>
                                   {o.status}
                                 </span>
                               </td>
-                              <td className="p-4 text-right">
+                              <td className="p-4 text-right flex flex-wrap gap-1.5 justify-end items-center">
                                 {o.status === 'PENDING' ? (
-                                  <button
-                                    onClick={() => handleApproveOrder(o.id)}
-                                    className="rounded bg-brand-green px-2.5 py-1 text-[9px] font-bold uppercase text-black hover:bg-opacity-90 transition-all shadow-md shadow-brand-green/10"
-                                  >
-                                    Approve
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => handleApproveOrder(o.id)}
+                                      className="rounded bg-brand-green px-2 py-1 text-[9px] font-bold uppercase text-black hover:bg-opacity-90 transition-all hover:scale-102"
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setDenyingOrderId(o.id);
+                                        setRejectionReason('Your transaction ID is invalid. Please check and submit the correct payment reference.');
+                                      }}
+                                      className="rounded bg-brand-orange/15 border border-brand-orange/30 px-2 py-1 text-[9px] font-bold uppercase text-brand-orange hover:bg-brand-orange hover:text-white transition-all hover:scale-102"
+                                    >
+                                      Deny
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setEditingOrderId(o.id);
+                                        setEditingTxId(o.paymentIntentId || '');
+                                      }}
+                                      className="rounded bg-white/5 border border-white/10 px-2 py-1 text-[9px] font-bold uppercase text-gray-300 hover:bg-white/10 hover:text-white transition-all hover:scale-102"
+                                    >
+                                      Edit ID
+                                    </button>
+                                    <button
+                                      onClick={() => handleCancelOrder(o.id)}
+                                      className="rounded bg-red-500/10 border border-red-500/20 px-2 py-1 text-[9px] font-bold uppercase text-red-400 hover:bg-red-600 hover:text-white transition-all hover:scale-102"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </>
+                                ) : o.status === 'CANCELLED' ? (
+                                  <span className="text-[10px] text-red-400 font-bold uppercase tracking-wider">Cancelled / Denied</span>
                                 ) : (
                                   <span className="text-[10px] text-gray-600 font-bold uppercase">Issued</span>
                                 )}
@@ -1129,6 +1259,70 @@ export default function AdminDashboard() {
             </div>
           )}
         </>
+      )}
+
+      {/* Modals for Rejection & TxID editing */}
+      {denyingOrderId && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-lg border border-white/10 bg-brand-card p-6 space-y-4">
+            <h3 className="font-display text-sm font-bold uppercase text-white tracking-wider">Deny / Reject Order</h3>
+            <p className="text-xs text-gray-400">Specify the rejection reason. The customer will see this message in their dashboard.</p>
+            
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="e.g. Your transaction ID is invalid. Please contact support."
+              className="w-full rounded bg-black/60 border border-white/10 p-3 text-xs text-white focus:border-brand-orange focus:outline-none min-h-[80px]"
+            />
+
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                onClick={() => setDenyingOrderId(null)}
+                className="rounded border border-white/10 px-4 py-2 text-xs font-bold uppercase text-gray-400 hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDenyOrder(denyingOrderId, rejectionReason)}
+                className="rounded bg-brand-orange px-4 py-2 text-xs font-bold uppercase text-white hover:bg-opacity-95"
+              >
+                Confirm Deny
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingOrderId && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-lg border border-white/10 bg-brand-card p-6 space-y-4">
+            <h3 className="font-display text-sm font-bold uppercase text-white tracking-wider">Edit Transaction ID</h3>
+            <p className="text-xs text-gray-400">Enter the corrected Transaction Reference (UTR/TxID) for this manual payment.</p>
+            
+            <input
+              type="text"
+              value={editingTxId}
+              onChange={(e) => setEditingTxId(e.target.value)}
+              placeholder="Enter new transaction ID"
+              className="w-full rounded bg-black/60 border border-white/10 px-3 py-2 text-xs text-white focus:border-brand-green focus:outline-none"
+            />
+
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                onClick={() => setEditingOrderId(null)}
+                className="rounded border border-white/10 px-4 py-2 text-xs font-bold uppercase text-gray-400 hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleUpdateOrderTxId(editingOrderId, editingTxId)}
+                className="rounded bg-brand-green px-4 py-2 text-xs font-bold uppercase text-black hover:bg-opacity-95"
+              >
+                Save Reference
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

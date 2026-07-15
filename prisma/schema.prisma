@@ -99,6 +99,7 @@ model Order {
   paymentMethod   String      @default("STRIPE") // "STRIPE", "PAYPAL", "RAZORPAY", "FREE"
   paymentIntentId String?
   createdAt       DateTime    @default(now())
+  rejectionReason String?
   orderItems      OrderItem[]
 }
 

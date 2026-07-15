@@ -27,6 +27,8 @@ interface OrderItem {
   orderNumber: string;
   netAmount: number;
   paymentMethod: string;
+  paymentIntentId?: string | null;
+  rejectionReason?: string | null;
   createdAt: string;
   status: string;
 }
@@ -87,16 +89,6 @@ export default function UserDashboard() {
       const fetchDashboardData = async () => {
         setLoading(true);
         try {
-          // 1. Fetch user orders
-          const ordersRes = await fetch('/api/orders/user', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          // Note: since we haven't written user-specific subroutes, we can write inline fetches 
-          // or run custom database queries. Let's create user-specific API fetches.
-          // Alternatively, we can fetch all orders and filter client-side, or create a quick unified endpoint.
-          // Let's create `/api/auth/dashboard` on the backend which returns everything in one query!
-          // That is a much cleaner way to aggregate client dashboard data!
           const dashboardRes = await fetch('/api/auth/dashboard-details', {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -175,61 +167,246 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      <div className="space-y-4">
-        <h2 className="font-display text-sm font-bold uppercase text-white tracking-wider border-b border-white/5 pb-2 flex items-center space-x-2">
-          <Download className="h-4 w-4 text-brand-green" />
-          <span>Digital Product Library</span>
-        </h2>
-        
-        {loading ? (
-          <div className="text-center py-12 text-xs text-gray-500 uppercase tracking-widest animate-pulse">
-            Aggregating files...
-          </div>
-        ) : downloads.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4">
-            {downloads.map((item) => {
-              const expired = now > new Date(item.expiresAt);
-              const remainingStr = getRemainingTimeStr(item.expiresAt);
-              return (
-                <div
-                  key={item.id}
-                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg bg-brand-card/60 border border-white/5 p-4 gap-4"
-                >
-                  <div>
-                    <h3 className="font-display font-bold text-sm text-white uppercase">
-                      {item.product.title}
-                    </h3>
-                    <p className="text-[10px] text-gray-500 mt-1">
-                      Version: {item.product.version} | Size: {item.product.downloadSize}
-                    </p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">
-                      Expires: {new Date(item.expiresAt).toLocaleString()} ({expired ? 'Expired' : remainingStr})
-                    </p>
+      {/* Tabs Navigation */}
+      <div className="flex border-b border-white/5 text-xs font-bold uppercase tracking-wider gap-4">
+        <button
+          onClick={() => setActiveTab('downloads')}
+          className={`pb-3 border-b-2 transition-all ${
+            activeTab === 'downloads'
+              ? 'border-brand-green text-brand-green'
+              : 'border-transparent text-gray-500 hover:text-white'
+          }`}
+        >
+          Downloads Library
+        </button>
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`pb-3 border-b-2 transition-all ${
+            activeTab === 'orders'
+              ? 'border-brand-green text-brand-green'
+              : 'border-transparent text-gray-500 hover:text-white'
+          }`}
+        >
+          Payment Registry
+        </button>
+        <button
+          onClick={() => setActiveTab('support')}
+          className={`pb-3 border-b-2 transition-all ${
+            activeTab === 'support'
+              ? 'border-brand-green text-brand-green'
+              : 'border-transparent text-gray-500 hover:text-white'
+          }`}
+        >
+          Support Center
+        </button>
+      </div>
+
+      {/* Tab Contents */}
+      {activeTab === 'downloads' && (
+        <div className="space-y-4">
+          <h2 className="font-display text-sm font-bold uppercase text-white tracking-wider border-b border-white/5 pb-2 flex items-center space-x-2">
+            <Download className="h-4 w-4 text-brand-green" />
+            <span>Digital Product Library</span>
+          </h2>
+          
+          {loading ? (
+            <div className="text-center py-12 text-xs text-gray-500 uppercase tracking-widest animate-pulse">
+              Aggregating files...
+            </div>
+          ) : downloads.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+              {downloads.map((item) => {
+                const expired = now > new Date(item.expiresAt);
+                const remainingStr = getRemainingTimeStr(item.expiresAt);
+                return (
+                  <div
+                    key={item.id}
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg bg-brand-card/60 border border-white/5 p-4 gap-4"
+                  >
+                    <div>
+                      <h3 className="font-display font-bold text-sm text-white uppercase">
+                        {item.product.title}
+                      </h3>
+                      <p className="text-[10px] text-gray-500 mt-1">
+                        Version: {item.product.version} | Size: {item.product.downloadSize}
+                      </p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        Expires: {new Date(item.expiresAt).toLocaleString()} ({expired ? 'Expired' : remainingStr})
+                      </p>
+                    </div>
+                    
+                    {expired ? (
+                      <span className="rounded bg-white/5 border border-white/10 px-3 py-1 text-[10px] font-bold text-gray-500 uppercase select-none">
+                        Link Expired
+                      </span>
+                    ) : (
+                      <a
+                        href={`/api/downloads/${item.token}`}
+                        className="rounded bg-brand-green px-4 py-2 text-xs font-black uppercase text-black hover:bg-opacity-90 flex items-center space-x-1.5"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Get ZIP file</span>
+                      </a>
+                    )}
                   </div>
-                  
-                  {expired ? (
-                    <span className="rounded bg-red-500/10 border border-red-500/25 px-3 py-1 text-[10px] font-bold text-red-400 uppercase select-none">
-                      Link Expired
-                    </span>
-                  ) : (
-                    <a
-                      href={`/api/downloads/${item.token}`}
-                      className="rounded bg-brand-green px-4 py-2 text-xs font-black uppercase text-black hover:bg-opacity-90 flex items-center space-x-1.5"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      <span>Get ZIP file</span>
-                    </a>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 italic py-8 text-center bg-brand-card/25 border border-dashed border-white/10 rounded-lg">
+              You haven't purchased any products yet or download keys are not active.
+            </p>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'orders' && (
+        <div className="space-y-4">
+          <h2 className="font-display text-sm font-bold uppercase text-white tracking-wider border-b border-white/5 pb-2 flex items-center space-x-2">
+            <ShoppingBag className="h-4 w-4 text-brand-green" />
+            <span>Payment Registry & Orders</span>
+          </h2>
+
+          {loading ? (
+            <div className="text-center py-12 text-xs text-gray-500 uppercase tracking-widest animate-pulse">
+              Aggregating registry...
+            </div>
+          ) : orders.length > 0 ? (
+            <div className="space-y-4">
+              {orders.map((o) => (
+                <div
+                  key={o.id}
+                  className="rounded-lg bg-brand-card/60 border border-white/5 p-4 space-y-3"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div>
+                      <span className="font-mono font-bold text-white text-sm">{o.orderNumber}</span>
+                      <span className="text-[10px] text-gray-500 ml-2">({new Date(o.createdAt).toLocaleDateString()})</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className="font-bold text-brand-green">${o.netAmount.toFixed(2)}</span>
+                      <span className={`rounded px-2 py-0.5 text-[9px] font-bold uppercase ${
+                        o.status === 'COMPLETED'
+                          ? 'bg-brand-green/10 border border-brand-green/20 text-brand-green'
+                          : o.status === 'CANCELLED'
+                          ? 'bg-red-500/10 border border-red-500/20 text-red-400'
+                          : 'bg-brand-orange/15 border border-brand-orange/20 text-brand-orange animate-pulse'
+                      }`}>
+                        {o.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-gray-400">
+                    <p>Gateway: <strong className="text-white uppercase">{o.paymentMethod}</strong></p>
+                    {o.paymentIntentId && (
+                      <p>Reference UTR: <strong className="font-mono text-brand-orange select-all">{o.paymentIntentId}</strong></p>
+                    )}
+                  </div>
+
+                  {/* Display rejection reason alert box if cancelled and reason exists */}
+                  {o.status === 'CANCELLED' && o.rejectionReason && (
+                    <div className="rounded border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-400 space-y-1">
+                      <p className="font-bold uppercase tracking-wider text-[9px] flex items-center space-x-1">
+                        <span>⚠️ Payment Rejection Notice</span>
+                      </p>
+                      <p className="italic leading-relaxed">{o.rejectionReason}</p>
+                    </div>
                   )}
                 </div>
-              );
-            })}
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 italic py-8 text-center bg-brand-card/25 border border-dashed border-white/10 rounded-lg">
+              No payments logged in order history.
+            </p>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'support' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Submit ticket form */}
+          <div className="md:col-span-2 rounded-lg bg-brand-card/60 border border-white/5 p-6 space-y-4">
+            <h3 className="font-display text-sm font-bold uppercase text-white tracking-wider flex items-center space-x-1.5 border-b border-white/5 pb-2">
+              <PlusCircle className="h-4 w-4 text-brand-green" />
+              <span>Open Support Ticket</span>
+            </h3>
+
+            <form onSubmit={handleTicketSubmit} className="space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-gray-400">Subject</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Installation help, custom request"
+                  value={ticketSubject}
+                  onChange={(e) => setTicketSubject(e.target.value)}
+                  className="w-full rounded bg-black/60 border border-white/10 px-3 py-2.5 text-white focus:border-brand-green focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-gray-400">Message Description</label>
+                <textarea
+                  required
+                  placeholder="Explain your issue in detail..."
+                  value={ticketMessage}
+                  onChange={(e) => setTicketMessage(e.target.value)}
+                  className="w-full rounded bg-black/60 border border-white/10 p-3 text-white focus:border-brand-green focus:outline-none min-h-[100px]"
+                />
+              </div>
+
+              {ticketError && (
+                <p className="text-xs text-brand-orange font-bold uppercase tracking-wider">{ticketError}</p>
+              )}
+              {ticketSuccess && (
+                <p className="text-xs text-brand-green font-bold uppercase tracking-wider">Ticket submitted successfully! We will get back to you shortly.</p>
+              )}
+
+              <button
+                type="submit"
+                className="rounded bg-brand-green px-5 py-2.5 text-xs font-black uppercase text-black tracking-wider hover:bg-opacity-95"
+              >
+                Submit Ticket
+              </button>
+            </form>
           </div>
-        ) : (
-          <p className="text-xs text-gray-500 italic py-8 text-center bg-brand-card/25 border border-dashed border-white/10 rounded-lg">
-            You haven't purchased any products yet or download keys are not active.
-          </p>
-        )}
-      </div>
+
+          {/* Past tickets log */}
+          <div className="space-y-4">
+            <h3 className="font-display text-sm font-bold uppercase text-white tracking-wider flex items-center space-x-1.5 border-b border-white/5 pb-2">
+              <MessageCircle className="h-4 w-4 text-brand-green" />
+              <span>Past Tickets</span>
+            </h3>
+
+            {tickets.length > 0 ? (
+              <div className="space-y-3">
+                {tickets.map((t) => (
+                  <div key={t.id} className="rounded bg-brand-card/30 border border-white/5 p-3.5 space-y-1">
+                    <p className="font-bold text-white text-xs truncate uppercase">{t.subject}</p>
+                    <p className="text-[10px] text-gray-400 line-clamp-2">{t.message}</p>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[9px] text-gray-500">{new Date(t.createdAt).toLocaleDateString()}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[8px] font-bold uppercase ${
+                        t.status === 'RESOLVED'
+                          ? 'bg-brand-green/10 text-brand-green'
+                          : t.status === 'CLOSED'
+                          ? 'bg-white/5 text-gray-500'
+                          : 'bg-brand-orange/15 text-brand-orange animate-pulse'
+                      }`}>
+                        {t.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 italic py-4 text-center">No past tickets found.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
