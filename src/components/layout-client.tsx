@@ -21,7 +21,9 @@ import {
   Mail, 
   Send,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  Copy,
+  Check
 } from 'lucide-react';
 
 function Navigation() {
@@ -34,6 +36,7 @@ function Navigation() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [customOrdersOpen, setCustomOrdersOpen] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +44,12 @@ function Navigation() {
       router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
     }
+  };
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText('vasigaming2k23@gmail.com');
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2000);
   };
 
   const isLinkActive = (href: string) => {
@@ -319,7 +328,16 @@ function Navigation() {
             <div className="rounded bg-black/40 border border-white/5 p-4 space-y-3">
               <div className="flex items-center justify-between text-xs font-sans">
                 <span className="text-gray-400">Email Contact:</span>
-                <span className="text-brand-green font-bold select-all font-mono">vasigaming2k23@gmail.com</span>
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-brand-green font-bold select-all font-mono">vasigaming2k23@gmail.com</span>
+                  <button 
+                    onClick={handleCopyEmail}
+                    className="p-1 text-gray-500 hover:text-white transition-colors rounded hover:bg-white/5 cursor-pointer"
+                    title="Copy email to clipboard"
+                  >
+                    {copiedEmail ? <Check className="h-3.5 w-3.5 text-brand-green" /> : <Copy className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
               </div>
               <p className="text-[10px] text-gray-500 leading-normal font-sans">
                 Send us an email or message us on WhatsApp with your design requirements, reference photos, or concept plans, and we will get back to you!
@@ -342,6 +360,13 @@ function Navigation() {
                 <span>WhatsApp</span>
               </a>
             </div>
+
+            <button
+              onClick={() => setCustomOrdersOpen(false)}
+              className="w-full flex items-center justify-center rounded border border-white/10 bg-transparent py-2.5 text-xs font-black uppercase text-gray-400 hover:bg-white/5 transition-all font-display mt-1 cursor-pointer"
+            >
+              Close Window
+            </button>
           </div>
         </div>
       )}

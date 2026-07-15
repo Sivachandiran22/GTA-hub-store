@@ -54,13 +54,31 @@ export async function GET(
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
           });
-          const htmlText = await initialRes.text();
-          const confirmMatch = htmlText.match(/confirm=([a-zA-Z0-9_.-]+)/);
-          
-          if (confirmMatch) {
-            downloadUrl = `https://drive.google.com/uc?export=download&confirm=${confirmMatch[1]}&id=${driveId}`;
+
+          const contentType = initialRes.headers.get('Content-Type') || '';
+          if (contentType.includes('text/html')) {
+            const htmlText = await initialRes.text();
+            const confirmMatch = htmlText.match(/confirm=([a-zA-Z0-9_.-]+)/);
+            
+            if (confirmMatch) {
+              downloadUrl = `https://drive.google.com/uc?export=download&confirm=${confirmMatch[1]}&id=${driveId}`;
+            } else {
+              downloadUrl = initialUrl;
+            }
           } else {
-            downloadUrl = initialUrl;
+            // It is already the binary file stream! Return it immediately.
+            if (initialRes.ok && initialRes.body) {
+              const headers: any = {
+                'Content-Type': 'application/zip',
+                'Content-Disposition': `attachment; filename="${filename}"`,
+                'Cache-Control': 'no-cache',
+              };
+              const contentLength = initialRes.headers.get('Content-Length');
+              if (contentLength) {
+                headers['Content-Length'] = contentLength;
+              }
+              return new Response(initialRes.body, { headers });
+            }
           }
         }
 
