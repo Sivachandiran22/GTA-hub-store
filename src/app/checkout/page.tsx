@@ -273,14 +273,14 @@ export default function CheckoutPage() {
             {paymentMethod === 'UPI' && (
               <div className="space-y-5 pt-3 border-t border-white/5">
                 <div className="flex flex-col sm:flex-row items-center gap-4 bg-brand-green/5 border border-brand-green/10 rounded-lg p-4">
-                  {/* Simulated QR block */}
-                  <div className="flex-shrink-0 flex h-28 w-28 flex-col items-center justify-center rounded bg-white p-2">
-                    <div className="h-24 w-24 bg-[radial-gradient(square_8%_8%_at_0px_0px,#000_60%,transparent_0)] bg-[size:10px_10px]" style={{ backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%)', backgroundSize: '8px 8px' }} />
+                  {/* Real QR code image */}
+                  <div className="flex-shrink-0 flex h-28 w-28 items-center justify-center rounded bg-white p-1">
+                    <img src="/images/upi_qr.png" alt="UPI QR Code" className="h-26 w-26 object-contain rounded" />
                   </div>
                   <div className="space-y-2 text-xs">
                     <p className="font-bold text-white uppercase">Scan QR to pay via UPI</p>
-                    <p className="text-gray-400 font-mono">UPI ID: <span className="text-brand-green font-bold">admin@gtahub.store</span></p>
-                    <p className="text-gray-400 font-mono">Name: <span className="text-white">GTA HUB STORE</span></p>
+                    <p className="text-gray-400 font-mono">UPI ID: <span className="text-brand-green font-bold">vasigaming@upi</span></p>
+                    <p className="text-gray-400 font-mono">Name: <span className="text-white">SIVACHANDIRAN</span></p>
                     <p className="text-[10px] text-gray-500 leading-relaxed">Please open GPay, PhonePe, Paytm, or BHIM, scan the QR code (or enter the UPI ID), and transfer the exact due amount.</p>
                   </div>
                 </div>
