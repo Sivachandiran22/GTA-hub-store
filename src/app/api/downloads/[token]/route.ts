@@ -1,30 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 
-const SECRET_KEY = process.env.JWT_SECRET || 'gta-hub-store-premium-secret-key-322805b2';
-
-async function signUrl(url: string, filename: string, expiry: number): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(SECRET_KEY);
-  const data = encoder.encode(`${url}|${filename}|${expiry}`);
-  
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  
-  const signature = await crypto.subtle.sign(
-    'HMAC',
-    cryptoKey,
-    data
-  );
-  
-  return Array.from(new Uint8Array(signature))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+function extractDriveId(url: string): string | null {
+  const match = url.match(/[-\w]{25,}/);
+  return match ? match[0] : null;
 }
 
 export async function GET(
@@ -62,20 +41,95 @@ export async function GET(
       data: { downloadsCount: { increment: 1 } },
     });
 
-    const filename = `${downloadToken.product.slug}.zip`;
     const zipUrl = downloadToken.product.zipUrl;
 
-    // Generate signed streaming URL valid for 5 minutes
-    const expiry = Date.now() + 300000;
-    const signature = await signUrl(zipUrl, filename, expiry);
+    if (zipUrl.startsWith('http://') || zipUrl.startsWith('https://')) {
+      let downloadUrl = zipUrl;
+      const driveId = extractDriveId(zipUrl);
 
-    const streamUrl = new URL('/api/downloads/stream', request.url);
-    streamUrl.searchParams.set('url', zipUrl);
-    streamUrl.searchParams.set('filename', filename);
-    streamUrl.searchParams.set('expiry', expiry.toString());
-    streamUrl.searchParams.set('sig', signature);
+      // If it's a Google Drive URL, we resolve the direct download link first
+      if (driveId && (zipUrl.includes('drive.google.com') || zipUrl.includes('drive.usercontent.google.com'))) {
+        try {
+          const initialUrl = `https://drive.google.com/uc?export=download&id=${driveId}`;
+          const initialRes = await fetch(initialUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+          });
 
-    return NextResponse.redirect(streamUrl.toString());
+          const contentType = initialRes.headers.get('Content-Type') || '';
+          if (contentType.includes('text/html')) {
+            const htmlText = await initialRes.text();
+
+            // Extract all hidden inputs from the warning form to bypass warning page
+            const hiddenInputs: Record<string, string> = {};
+            const inputTagsMatch = htmlText.match(/<input\s+[^>]*type="hidden"[^>]*>/g) || [];
+
+            for (const tag of inputTagsMatch) {
+              const nameMatch = tag.match(/name="([^"]+)"/);
+              const valueMatch = tag.match(/value="([^"]+)"/);
+              if (nameMatch && valueMatch) {
+                hiddenInputs[nameMatch[1]] = valueMatch[1];
+              }
+            }
+
+            if (Object.keys(hiddenInputs).length > 0) {
+              const queryParams = new URLSearchParams();
+              for (const [k, v] of Object.entries(hiddenInputs)) {
+                queryParams.set(k, v);
+              }
+              downloadUrl = `https://drive.usercontent.google.com/download?${queryParams.toString()}`;
+            } else {
+              const confirmMatch = htmlText.match(/confirm=([a-zA-Z0-9_.-]+)/);
+              if (confirmMatch) {
+                downloadUrl = `https://drive.google.com/uc?export=download&confirm=${confirmMatch[1]}&id=${driveId}`;
+              } else {
+                // Intercept quota or access errors on initial resolution
+                if (htmlText.includes('Quota exceeded') || htmlText.includes('too many users')) {
+                  return new Response(
+                    'Error: The download quota for this Google Drive file has been exceeded. Please contact support at vasigaming2k23@gmail.com to request a direct download mirror link.',
+                    { status: 429, headers: { 'Content-Type': 'text/plain' } }
+                  );
+                }
+                if (htmlText.includes('Access Denied') || htmlText.includes('sign in') || htmlText.includes('authorization')) {
+                  return new Response(
+                    'Error: Access restricted on Google Drive. The file sharing permissions must be set to "Anyone with the link" by the owner. Please contact support at vasigaming2k23@gmail.com.',
+                    { status: 403, headers: { 'Content-Type': 'text/plain' } }
+                  );
+                }
+              }
+            }
+          }
+        } catch (fetchErr) {
+          console.error('Failed to resolve Google Drive link:', fetchErr);
+        }
+      }
+
+      // Redirect browser directly to the final resolved download URL
+      return NextResponse.redirect(downloadUrl);
+    }
+
+    // Serve local uploads
+    if (zipUrl.startsWith('private_uploads/')) {
+      const fs = require('fs');
+      const path = require('path');
+      const filePath = path.join(process.cwd(), zipUrl);
+      if (fs.existsSync(filePath)) {
+        const fileStream = fs.createReadStream(filePath);
+        const fileStats = fs.statSync(filePath);
+        const filename = `${downloadToken.product.slug}.zip`;
+        return new Response(fileStream as any, {
+          headers: {
+            'Content-Type': 'application/zip',
+            'Content-Disposition': `attachment; filename="${filename}"`,
+            'Content-Length': fileStats.size.toString(),
+            'Cache-Control': 'no-cache',
+          },
+        });
+      }
+    }
+
+    return new Response('Error: File location is not valid or unsupported.', { status: 400 });
   } catch (err) {
     console.error('Download token routing failed:', err);
     return new Response('Internal server error', { status: 500 });
