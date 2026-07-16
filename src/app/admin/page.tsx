@@ -13,7 +13,9 @@ import {
   BarChart3, 
   Eye, 
   CheckCircle2, 
-  AlertCircle
+  AlertCircle,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 
 interface TelemetrySummary {
@@ -53,7 +55,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { user, isAuthenticated, isAdmin, token, loading: authLoading } = useAuth();
 
-  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'add-product' | 'manage-products'>('analytics');
+  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'add-product' | 'manage-products' | 'chat-console'>('analytics');
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<TelemetrySummary | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrderType[]>([]);
@@ -95,6 +97,102 @@ export default function AdminDashboard() {
   const [rejectionReason, setRejectionReason] = useState('Your transaction ID is invalid. Please check and submit the correct payment reference.');
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editingTxId, setEditingTxId] = useState('');
+
+  // Live Chat Console states
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [replyText, setReplyText] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatListLoading, setChatListLoading] = useState(false);
+
+  const fetchConversations = async () => {
+    if (!token) return;
+    setChatListLoading(true);
+    try {
+      const res = await fetch('/api/admin/chat', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setConversations(data.conversations || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch conversations:', err);
+    } finally {
+      setChatListLoading(false);
+    }
+  };
+
+  const fetchChatMessages = async (userId: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/admin/chat/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setChatMessages(data.messages || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch chat messages:', err);
+    }
+  };
+
+  const handleSendReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyText.trim() || !selectedUserId || !token) return;
+    const text = replyText.trim();
+    setReplyText('');
+    try {
+      const res = await fetch(`/api/admin/chat/${selectedUserId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ message: text })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setChatMessages(prev => [...prev, data.message]);
+        
+        // Update sidebar snippet
+        setConversations(prev =>
+          prev.map(c =>
+            c.userId === selectedUserId
+              ? { ...c, lastMessage: text, lastMessageTime: new Date().toISOString(), isAdminSender: true }
+              : c
+          )
+        );
+      } else {
+        alert(data.message || 'Failed to send reply');
+      }
+    } catch (err) {
+      console.error('Failed to send reply:', err);
+    }
+  };
+
+  // Poll active chat thread log
+  useEffect(() => {
+    let interval: any;
+    if (activeSubTab === 'chat-console' && selectedUserId && token) {
+      fetchChatMessages(selectedUserId);
+      interval = setInterval(() => {
+        fetchChatMessages(selectedUserId);
+      }, 5000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeSubTab, selectedUserId, token]);
+
+  // Load chat conversations list
+  useEffect(() => {
+    if (activeSubTab === 'chat-console' && token) {
+      fetchConversations();
+    }
+  }, [activeSubTab, token]);
 
   // Fetch admin telemetry
   useEffect(() => {
@@ -733,6 +831,16 @@ export default function AdminDashboard() {
           >
             Manage Products
           </button>
+          <button
+            onClick={() => setActiveSubTab('chat-console')}
+            className={`rounded px-4 py-2 transition-all ${
+              activeSubTab === 'chat-console'
+                ? 'bg-brand-green text-black'
+                : 'bg-white/5 text-gray-400 hover:text-white'
+            }`}
+          >
+            Chat Console
+          </button>
         </div>
       </div>
 
@@ -1256,6 +1364,128 @@ export default function AdminDashboard() {
                   No products registered in the database yet.
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Chat Console Sub Tab */}
+          {activeSubTab === 'chat-console' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[500px]">
+              {/* Sidebar: Conversation List */}
+              <div className="rounded-lg bg-brand-card border border-white/5 p-4 flex flex-col h-full overflow-hidden">
+                <h3 className="font-display text-xs font-bold uppercase text-white tracking-widest border-b border-white/5 pb-3 flex items-center space-x-1.5">
+                  <MessageSquare className="h-4 w-4 text-brand-green" />
+                  <span>Client Conversations</span>
+                </h3>
+                
+                <div className="flex-grow overflow-y-auto mt-4 space-y-2 scrollbar-thin scrollbar-thumb-white/5">
+                  {chatListLoading ? (
+                    <div className="text-center py-8 text-xs text-gray-500 uppercase tracking-widest animate-pulse">
+                      Syncing messages...
+                    </div>
+                  ) : conversations.length > 0 ? (
+                    conversations.map((c) => (
+                      <button
+                        key={c.userId}
+                        onClick={() => setSelectedUserId(c.userId)}
+                        className={`w-full rounded p-3 text-left transition-all border text-xs flex flex-col space-y-1.5 ${
+                          selectedUserId === c.userId
+                            ? 'bg-brand-green/10 border-brand-green/30 text-white'
+                            : 'bg-black/25 border-white/5 text-gray-300 hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold uppercase truncate max-w-[120px]">{c.fullName}</span>
+                          <span className="text-[9px] text-gray-500">
+                            {new Date(c.lastMessageTime).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-gray-400 truncate leading-relaxed italic">
+                          {c.isAdminSender ? 'You: ' : ''}{c.lastMessage}
+                        </p>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-500 italic py-8 text-center">No active chats in the database.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Main Panel: Conversation Window */}
+              <div className="md:col-span-2 rounded-lg bg-brand-card border border-white/5 flex flex-col h-full overflow-hidden">
+                {selectedUserId ? (
+                  <>
+                    {/* Active Chat Header */}
+                    {(() => {
+                      const activeConv = conversations.find(c => c.userId === selectedUserId);
+                      return (
+                        <div className="bg-black/45 px-6 py-3.5 border-b border-white/5 flex justify-between items-center">
+                          <div>
+                            <h3 className="font-display font-bold text-white text-xs uppercase">
+                              {activeConv?.fullName || 'Client Thread'}
+                            </h3>
+                            <p className="text-[10px] text-gray-500 mt-0.5">{activeConv?.email}</p>
+                          </div>
+                          <span className="text-[9px] text-brand-green font-bold uppercase tracking-wider">Connected</span>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Chat Messages Log */}
+                    <div className="flex-grow overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-white/5 scrollbar-track-transparent">
+                      {chatMessages.length > 0 ? (
+                        chatMessages.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`flex flex-col ${msg.isAdmin ? 'items-end' : 'items-start'}`}
+                          >
+                            <div
+                              className={`max-w-[75%] rounded px-3.5 py-2 text-xs leading-relaxed ${
+                                msg.isAdmin
+                                  ? 'bg-brand-green text-black font-medium'
+                                  : 'bg-white/5 text-gray-300 border border-white/5'
+                              }`}
+                            >
+                              {msg.message}
+                            </div>
+                            <span className="text-[8px] text-gray-600 mt-1 px-1">
+                              {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-gray-500 italic py-12 text-center">No messages logged in this thread.</p>
+                      )}
+                    </div>
+
+                    {/* Chat Input Footer */}
+                    <form onSubmit={handleSendReply} className="p-4 bg-black/25 border-t border-white/5 flex gap-3">
+                      <input
+                        type="text"
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="Type reply to client..."
+                        className="flex-grow rounded bg-black/60 border border-white/10 px-4 py-2.5 text-xs text-white focus:border-brand-green focus:outline-none"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!replyText.trim()}
+                        className="rounded bg-brand-green px-5 text-black hover:bg-opacity-95 disabled:opacity-50 transition-colors flex items-center justify-center font-bold text-xs uppercase cursor-pointer space-x-1.5"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        <span>Send</span>
+                      </button>
+                    </form>
+                  </>
+                ) : (
+                  <div className="flex-grow flex flex-col items-center justify-center text-center p-6 space-y-2">
+                    <MessageSquare className="h-10 w-10 text-gray-600 animate-bounce" />
+                    <h3 className="font-display font-bold text-gray-500 uppercase text-xs tracking-wider">No Selected Thread</h3>
+                    <p className="text-[10px] text-gray-500 max-w-[240px] leading-relaxed">
+                      Select a customer conversation from the list to read history and send immediate responses.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </>

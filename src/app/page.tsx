@@ -3,6 +3,7 @@ import Link from 'next/link';
 import prisma from '@/lib/db';
 import ProductCard from '@/components/product-card';
 import FeaturedSlider from '@/components/featured-slider';
+import FlashSaleTimer from '@/components/flash-sale-timer';
 import { 
   ArrowRight, 
   Sparkles, 
@@ -375,7 +376,7 @@ export default async function HomePage() {
       {/* 5. Flash Sales / Sale Items */}
       {saleProducts.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-2">
               <span className="flex h-2 w-2 rounded-full bg-brand-orange animate-ping" />
               <div>
@@ -386,6 +387,7 @@ export default async function HomePage() {
                 <p className="text-xs text-gray-500 mt-1">Huge discounts on premium assets</p>
               </div>
             </div>
+            <FlashSaleTimer />
           </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">

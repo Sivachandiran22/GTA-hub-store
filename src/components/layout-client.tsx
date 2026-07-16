@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { CartProvider, useCart } from '@/context/CartContext';
 import CursorGlow from '@/components/visual/cursor-glow';
 import Particles from '@/components/visual/particles';
+import ChatWidget from '@/components/chat-widget';
 import { 
   ShoppingBag, 
   User, 
@@ -512,6 +513,7 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
         {/* Theme FX */}
         <CursorGlow />
         <Particles />
+        <ChatWidget />
         
         {/* Page Structure */}
         <div className="relative z-10 flex min-h-screen flex-col bg-brand-bg text-gray-200 bg-grid-pattern">
