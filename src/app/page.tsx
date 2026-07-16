@@ -104,86 +104,84 @@ const CATEGORY_THEMES: Record<string, { icon: any; gradient: string; border: str
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  // Fetch dynamic database counts
-  const productsStats = await prisma.product.aggregate({
-    _sum: { downloadsCount: true },
-    _count: { id: true }
-  });
+  // Fetch homepage datasets concurrently in parallel
+  const [
+    productsStats,
+    uniqueBuyers,
+    categories,
+    featuredProducts,
+    latestProducts,
+    saleProducts,
+    allProducts,
+    reviews
+  ] = await Promise.all([
+    prisma.product.aggregate({
+      _sum: { downloadsCount: true },
+      _count: { id: true }
+    }),
+    prisma.order.groupBy({
+      by: ['userId'],
+      where: { status: 'COMPLETED' }
+    }),
+    prisma.category.findMany({
+      take: 6,
+      include: {
+        _count: {
+          select: { products: true }
+        }
+      }
+    }),
+    prisma.product.findMany({
+      where: { isFeatured: true, isVisible: true },
+      take: 4,
+      include: {
+        category: {
+          select: { name: true, slug: true }
+        }
+      }
+    }),
+    prisma.product.findMany({
+      where: { isVisible: true },
+      orderBy: { createdAt: 'desc' },
+      take: 4,
+      include: {
+        category: {
+          select: { name: true, slug: true }
+        }
+      }
+    }),
+    prisma.product.findMany({
+      where: { salePrice: { not: null }, isVisible: true },
+      take: 4,
+      include: {
+        category: {
+          select: { name: true, slug: true }
+        }
+      }
+    }),
+    prisma.product.findMany({
+      where: { isVisible: true },
+      orderBy: { createdAt: 'desc' },
+      take: 12,
+      include: {
+        category: {
+          select: { name: true, slug: true }
+        }
+      }
+    }),
+    prisma.review.findMany({
+      take: 6,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { fullName: true } },
+        product: { select: { title: true } }
+      }
+    })
+  ]);
+
   const totalDownloads = productsStats._sum.downloadsCount || 0;
   const totalProducts = productsStats._count.id || 0;
-
-  // Fetch satisfied buyers count
-  const uniqueBuyers = await prisma.order.groupBy({
-    by: ['userId'],
-    where: { status: 'COMPLETED' }
-  });
   const satisfiedBuyers = uniqueBuyers.length;
-
-  // Fetch featured categories
-  const categories = await prisma.category.findMany({
-    take: 6,
-    include: {
-      _count: {
-        select: { products: true }
-      }
-    }
-  });
-
-  // Fetch featured products
-  const featuredProducts = await prisma.product.findMany({
-    where: { isFeatured: true, isVisible: true },
-    take: 4,
-    include: {
-      category: {
-        select: { name: true, slug: true }
-      }
-    }
-  });
-
-  // Fetch latest products
-  const latestProducts = await prisma.product.findMany({
-    where: { isVisible: true },
-    orderBy: { createdAt: 'desc' },
-    take: 4,
-    include: {
-      category: {
-        select: { name: true, slug: true }
-      }
-    }
-  });
-
-  // Fetch flash sale products
-  const saleProducts = await prisma.product.findMany({
-    where: { salePrice: { not: null }, isVisible: true },
-    take: 4,
-    include: {
-      category: {
-        select: { name: true, slug: true }
-      }
-    }
-  });
-
-  // Fetch all visible products for homepage showcase
-  const allProducts = await prisma.product.findMany({
-    where: { isVisible: true },
-    orderBy: { createdAt: 'desc' },
-    take: 12,
-    include: {
-      category: {
-        select: { name: true, slug: true }
-      }
-    }
-  });
-
-  // Fetch actual reviews from database
-  const reviews = await prisma.review.findMany({
-    take: 6,
-    orderBy: { createdAt: 'desc' },
-    include: {
-      user: { select: { fullName: true } },
-      product: { select: { title: true } }
-    }
-  });
 
   // FAQ List
   const faqs = [
@@ -445,8 +443,8 @@ export default async function HomePage() {
                 <p className="text-xs italic text-gray-400 leading-relaxed">"{r.comment}"</p>
                 <div className="pt-2 border-t border-white/5 flex justify-between items-center text-[10px]">
                   <div>
-                    <p className="font-display font-bold text-white uppercase">{r.user.fullName}</p>
-                    <p className="text-brand-green mt-0.5">{r.product.title}</p>
+                    <p className="font-display font-bold text-white uppercase">{r.user?.fullName || 'Verified Buyer'}</p>
+                    <p className="text-brand-green mt-0.5">{r.product?.title || 'GTA Mod'}</p>
                   </div>
                   {r.isVerifiedPurchase && (
                     <span className="text-brand-orange font-bold uppercase tracking-wider">Verified Buyer</span>
