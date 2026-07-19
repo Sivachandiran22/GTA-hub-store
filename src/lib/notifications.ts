@@ -9,6 +9,11 @@ import prisma from './db';
  */
 export async function sendOrderNotification(orderId: string, isUpdate: boolean = false) {
   try {
+    // Diagnostic logs to check environment variables presence on Vercel
+    console.log(`[Diagnostic] sendOrderNotification triggered. Order ID: ${orderId}, isUpdate: ${isUpdate}`);
+    console.log(`[Diagnostic] DISCORD_WEBHOOK_URL configured:`, !!process.env.DISCORD_WEBHOOK_URL);
+    console.log(`[Diagnostic] TELEGRAM_BOT_TOKEN configured:`, !!process.env.TELEGRAM_BOT_TOKEN);
+    console.log(`[Diagnostic] TELEGRAM_CHAT_ID:`, process.env.TELEGRAM_CHAT_ID || 'undefined');
     // 1. Fetch order details from the database along with user profile
     const order = await prisma.order.findUnique({
       where: { id: orderId },
