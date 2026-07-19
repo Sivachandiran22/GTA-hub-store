@@ -32,7 +32,8 @@ export async function sendOrderNotification(orderId: string, isUpdate: boolean =
     const orderNumber = order.orderNumber;
     const customerName = order.user?.fullName || 'Anonymous Customer';
     const customerEmail = order.user?.email || 'No Email';
-    const amount = order.netAmount.toFixed(2);
+    const amountUSD = order.netAmount.toFixed(2);
+    const amountINR = Math.round(order.netAmount * 83).toLocaleString('en-IN');
     const method = order.paymentMethod;
     const refId = order.paymentIntentId || 'None';
 
@@ -52,7 +53,7 @@ export async function sendOrderNotification(orderId: string, isUpdate: boolean =
             color: isUpdate ? 3447003 : 16753920, // Blue for updates, Orange for new orders
             fields: [
               { name: "Order Number", value: `#${orderNumber}`, inline: true },
-              { name: "Net Amount", value: `₹${amount}`, inline: true },
+              { name: "Net Amount", value: `$${amountUSD} USD (approx. ₹${amountINR})`, inline: true },
               { name: "Payment Method", value: method, inline: true },
               { name: "Customer Details", value: `👤 **Name:** ${customerName}\n📧 **Email:** ${customerEmail}`, inline: false },
               { name: "UTR / Transaction Reference", value: `\`${refId}\``, inline: false }
@@ -85,7 +86,7 @@ export async function sendOrderNotification(orderId: string, isUpdate: boolean =
         `*${isUpdate ? '🔄 ORDER REFERENCE UPDATED' : '🚨 NEW ORDER REQUEST'}*\n\n` +
         `• *Order Number*: #${orderNumber}\n` +
         `• *Customer*: ${customerName} (${customerEmail})\n` +
-        `• *Net Amount*: ₹${amount}\n` +
+        `• *Net Amount*: $${amountUSD} USD (approx. ₹${amountINR})\n` +
         `• *Method*: ${method}\n` +
         `• *Reference ID / UTR*: \`${refId}\`\n\n` +
         `👉 _Please log in to the admin panel to review and approve/deny this order._`;
