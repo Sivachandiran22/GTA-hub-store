@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { getAuthUser } from '@/lib/jwt';
+import { sendOrderNotification } from '@/lib/notifications';
 
 export async function POST(
   request: Request,
@@ -48,6 +49,8 @@ export async function POST(
         rejectionReason: null // Clear rejection feedback since they updated the TxID
       }
     });
+
+    sendOrderNotification(id, true);
 
     return NextResponse.json({ message: 'Transaction reference updated successfully', status: newStatus });
   } catch (err) {

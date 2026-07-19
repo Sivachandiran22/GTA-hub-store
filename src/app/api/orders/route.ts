@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { getAuthUser } from '@/lib/jwt';
+import { sendOrderNotification } from '@/lib/notifications';
 
 export async function POST(request: Request) {
   try {
@@ -111,6 +112,10 @@ export async function POST(request: Request) {
 
       return newOrder;
     });
+
+    if (isManual) {
+      sendOrderNotification(order.id, false);
+    }
 
     // Load download tokens to return
     let downloadsResponse: any[] = [];
