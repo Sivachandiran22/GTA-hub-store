@@ -81,6 +81,7 @@ export default function UserDashboard() {
   // Customer Edit Reference states
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editingTxId, setEditingTxId] = useState('');
+  const [submittingTxId, setSubmittingTxId] = useState(false);
 
   // Fetch dashboard data
   useEffect(() => {
@@ -148,7 +149,8 @@ export default function UserDashboard() {
   };
 
   const handleUserUpdateTxId = async (orderId: string, transactionId: string) => {
-    if (!transactionId.trim()) return;
+    if (!transactionId.trim() || submittingTxId) return;
+    setSubmittingTxId(true);
     try {
       const res = await fetch(`/api/orders/${orderId}/user-update-txid`, {
         method: 'POST',
@@ -171,6 +173,8 @@ export default function UserDashboard() {
     } catch (err) {
       console.error('Failed to update reference', err);
       alert('Connection error occurred');
+    } finally {
+      setSubmittingTxId(false);
     }
   };
 
@@ -472,15 +476,24 @@ export default function UserDashboard() {
             <div className="flex justify-end space-x-3 pt-2">
               <button
                 onClick={() => setEditingOrderId(null)}
-                className="rounded border border-white/10 px-4 py-2 text-xs font-bold uppercase text-gray-400 hover:bg-white/5"
+                disabled={submittingTxId}
+                className="rounded border border-white/10 px-4 py-2 text-xs font-bold uppercase text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-200 disabled:opacity-30 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleUserUpdateTxId(editingOrderId, editingTxId)}
-                className="rounded bg-brand-green px-4 py-2 text-xs font-bold uppercase text-black hover:bg-opacity-95"
+                disabled={submittingTxId || !editingTxId.trim()}
+                className="rounded bg-brand-green px-4 py-2 text-xs font-bold uppercase text-black hover:bg-opacity-80 hover:scale-102 hover:shadow-lg hover:shadow-brand-green/20 transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none flex items-center justify-center space-x-1.5 cursor-pointer"
               >
-                Save Reference
+                {submittingTxId ? (
+                  <>
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-black border-t-transparent mr-1"></span>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <span>Save Reference</span>
+                )}
               </button>
             </div>
           </div>
