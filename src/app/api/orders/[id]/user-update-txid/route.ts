@@ -50,7 +50,7 @@ export async function POST(
       }
     });
 
-    sendOrderNotification(id, true);
+    await sendOrderNotification(id, true);
 
     return NextResponse.json({ message: 'Transaction reference updated successfully', status: newStatus });
   } catch (err) {

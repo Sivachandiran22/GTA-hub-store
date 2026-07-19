@@ -114,7 +114,7 @@ export async function POST(request: Request) {
     });
 
     if (isManual) {
-      sendOrderNotification(order.id, false);
+      await sendOrderNotification(order.id, false);
     }
 
     // Load download tokens to return
