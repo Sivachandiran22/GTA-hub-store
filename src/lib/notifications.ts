@@ -73,8 +73,9 @@ export async function sendOrderNotification(orderId: string, isUpdate: boolean =
 
     // 3. Telegram Bot Notification
     const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
-    const telegramChatId = process.env.TELEGRAM_CHAT_ID;
-    if (telegramBotToken && telegramChatId && telegramChatId.trim()) {
+    const telegramChatIdSetting = process.env.TELEGRAM_CHAT_ID;
+    if (telegramBotToken && telegramChatIdSetting && telegramChatIdSetting.trim()) {
+      const chatIds = telegramChatIdSetting.split(',').map(id => id.trim()).filter(Boolean);
       const messageText = 
         `*${isUpdate ? '🔄 ORDER REFERENCE UPDATED' : '🚨 NEW ORDER REQUEST'}*\n\n` +
         `• *Order Number*: #${orderNumber}\n` +
@@ -86,22 +87,26 @@ export async function sendOrderNotification(orderId: string, isUpdate: boolean =
 
       const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
       
-      await fetch(telegramUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: telegramChatId.trim(),
-          text: messageText,
-          parse_mode: 'Markdown'
-        })
-      })
-      .then(async (res) => {
-        if (!res.ok) {
-          const errText = await res.text();
-          console.error(`Telegram API responded with status: ${res.status}, response: ${errText}`);
-        }
-      })
-      .catch(err => console.error('Error triggering Telegram Bot:', err));
+      await Promise.all(
+        chatIds.map(chatId =>
+          fetch(telegramUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: messageText,
+              parse_mode: 'Markdown'
+            })
+          })
+          .then(async (res) => {
+            if (!res.ok) {
+              const errText = await res.text();
+              console.error(`Telegram API responded with status: ${res.status} for Chat ID ${chatId}, response: ${errText}`);
+            }
+          })
+          .catch(err => console.error(`Error triggering Telegram Bot for Chat ID ${chatId}:`, err))
+        )
+      );
     }
   } catch (err) {
     console.error('CRITICAL: Failed to dispatch order notification:', err);
