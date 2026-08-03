@@ -1289,6 +1289,7 @@ export default function AdminDashboard() {
                         <th className="p-4">Category</th>
                         <th className="p-4">Game Segment</th>
                         <th className="p-4">Price</th>
+                        <th className="p-4">Sale Price</th>
                         <th className="p-4">Featured</th>
                         <th className="p-4">Visible</th>
                         <th className="p-4 text-right">Actions</th>
@@ -1315,18 +1316,18 @@ export default function AdminDashboard() {
                           </td>
                           <td className="p-4 font-mono text-white">
                             {p.isFree ? (
-                              <span className="font-bold">FREE</span>
-                            ) : p.salePrice ? (
-                              <div className="flex flex-col gap-0.5">
-                                <span className="line-through text-gray-500 font-normal text-[10px]">
-                                  ${p.price.toFixed(2)}
-                                </span>
-                                <span className="text-brand-green font-bold text-xs">
-                                  ${p.salePrice.toFixed(2)}
-                                </span>
-                              </div>
+                              <span className="font-bold text-gray-500">FREE</span>
                             ) : (
-                              <span className="font-bold">${p.price.toFixed(2)}</span>
+                              <span>${p.price.toFixed(2)}</span>
+                            )}
+                          </td>
+                          <td className="p-4 font-mono">
+                            {p.isFree ? (
+                              <span className="text-gray-500">—</span>
+                            ) : p.salePrice ? (
+                              <span className="text-brand-green font-bold">${p.salePrice.toFixed(2)}</span>
+                            ) : (
+                              <span className="text-gray-500">—</span>
                             )}
                           </td>
                           <td className="p-4">
