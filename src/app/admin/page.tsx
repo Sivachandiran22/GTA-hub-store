@@ -1313,8 +1313,21 @@ export default function AdminDashboard() {
                               {p.game === '3D_MODEL' ? '3D Model' : 'GTA Mod'}
                             </span>
                           </td>
-                          <td className="p-4 font-mono font-bold text-white">
-                            {p.isFree ? 'FREE' : `$${p.price.toFixed(2)}`}
+                          <td className="p-4 font-mono text-white">
+                            {p.isFree ? (
+                              <span className="font-bold">FREE</span>
+                            ) : p.salePrice ? (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="line-through text-gray-500 font-normal text-[10px]">
+                                  ${p.price.toFixed(2)}
+                                </span>
+                                <span className="text-brand-green font-bold text-xs">
+                                  ${p.salePrice.toFixed(2)}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="font-bold">${p.price.toFixed(2)}</span>
+                            )}
                           </td>
                           <td className="p-4">
                             <button
