@@ -58,6 +58,16 @@ export default function CheckoutPage() {
     }
   }, [cart, orderSuccess, router]);
 
+  // Auto-select FREE payment method for $0 transactions
+  useEffect(() => {
+    if (total === 0) {
+      setPaymentMethod('FREE');
+      setRefNo('');
+    } else if (paymentMethod === 'FREE') {
+      setPaymentMethod('UPI');
+    }
+  }, [total, paymentMethod]);
+
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
@@ -247,98 +257,110 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Payment Method Selector */}
-            <div className="space-y-2.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Select Payment Method</label>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { id: 'UPI', name: 'UPI (India)' },
-                  { id: 'USDT', name: 'USDT / Binance (Intl)' },
-                ].map((method) => (
-                  <button
-                    key={method.id}
-                    type="button"
-                    onClick={() => {
-                      setPaymentMethod(method.id);
-                      setRefNo('');
-                    }}
-                    className={`rounded border p-3 text-center transition-all ${
-                      paymentMethod === method.id
-                        ? 'border-brand-green bg-brand-green/10 text-brand-green font-bold'
-                        : 'border-white/5 bg-black/30 text-gray-400 hover:border-white/10 hover:text-white'
-                    }`}
-                  >
-                    <span className="text-[10px] uppercase font-bold tracking-wider">{method.name}</span>
-                  </button>
-                ))}
+            {total === 0 ? (
+              <div className="rounded-lg border border-brand-green/20 bg-brand-green/5 p-5 text-xs text-gray-300 space-y-2">
+                <div className="flex items-center space-x-2 text-brand-green font-bold uppercase tracking-wider">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Free Access Granted</span>
+                </div>
+                <p className="leading-relaxed">All items in your shopping cart are free. No credit card, UPI scan, or transaction references are required to complete this order.</p>
               </div>
-            </div>
-
-            {/* UPI QR Payment Detail Block */}
-            {paymentMethod === 'UPI' && (
-              <div className="space-y-5 pt-3 border-t border-white/5">
-                <div className="flex flex-col sm:flex-row items-center gap-4 bg-brand-green/5 border border-brand-green/10 rounded-lg p-4">
-                  {/* Real QR code image */}
-                  <div className="flex-shrink-0 flex h-28 w-28 items-center justify-center rounded bg-white p-1">
-                    <img src="/images/upi_qr.png" alt="UPI QR Code" className="h-26 w-26 object-contain rounded" />
-                  </div>
-                  <div className="space-y-2 text-xs">
-                    <p className="font-bold text-white uppercase">Scan QR to pay via UPI</p>
-                    <p className="text-gray-400 font-mono">UPI ID: <span className="text-brand-green font-bold">vasigaming@upi</span></p>
-                    <p className="text-gray-400 font-mono">Name: <span className="text-white">SIVACHANDIRAN</span></p>
-                    <p className="text-[10px] text-gray-500 leading-relaxed">Please open GPay, PhonePe, Paytm, or BHIM, scan the QR code (or enter the UPI ID), and transfer the exact due amount.</p>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-brand-orange flex items-center space-x-1">
-                    <span>12-Digit UPI UTR Reference Number (Required)</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. 340918721642"
-                    pattern="[0-9]{12}"
-                    title="Please enter the exact 12-digit numeric UPI Transaction UTR ID"
-                    value={refNo}
-                    onChange={(e) => setRefNo(e.target.value.replace(/[^0-9]/g, ''))}
-                    className="w-full rounded bg-black/60 border border-white/10 px-3.5 py-2.5 text-xs text-white focus:border-brand-orange focus:outline-none font-mono"
-                  />
-                  <p className="text-[10px] text-gray-500 mt-1">Provide the UTR reference number from your receipt to automate confirmation matching.</p>
-                </div>
-              </div>
-            )}
-
-            {/* USDT QR Payment Detail Block */}
-            {paymentMethod === 'USDT' && (
-              <div className="space-y-5 pt-3 border-t border-white/5">
-                <div className="flex flex-col sm:flex-row items-center gap-4 bg-brand-orange/5 border border-brand-orange/10 rounded-lg p-4">
-                  {/* Real Binance QR code image */}
-                  <div className="flex-shrink-0 flex h-28 w-28 items-center justify-center rounded bg-white p-1">
-                    <img src="/images/binance_qr.jpg" alt="Binance USDT QR Code" className="h-26 w-26 object-contain rounded" />
-                  </div>
-                  <div className="space-y-2 text-xs">
-                    <p className="font-bold text-white uppercase">USDT wallet transfer (TRC-20)</p>
-                    <p className="text-gray-400 font-mono text-[10px]">TRC20: <span className="text-brand-orange font-bold break-all">TBdhe3wiv1MrX3MFc1TouEcASzLzaRNzm6</span></p>
-                    <p className="text-[10px] text-gray-500 leading-relaxed">Ensure you transfer via Tron Network (TRC20). Transfer the exact USD equivalent to avoid verification delays.</p>
+            ) : (
+              <>
+                {/* Payment Method Selector */}
+                <div className="space-y-2.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Select Payment Method</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { id: 'UPI', name: 'UPI (India)' },
+                      { id: 'USDT', name: 'USDT / Binance (Intl)' },
+                    ].map((method) => (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => {
+                          setPaymentMethod(method.id);
+                          setRefNo('');
+                        }}
+                        className={`rounded border p-3 text-center transition-all ${
+                          paymentMethod === method.id
+                            ? 'border-brand-green bg-brand-green/10 text-brand-green font-bold'
+                            : 'border-white/5 bg-black/30 text-gray-400 hover:border-white/10 hover:text-white'
+                        }`}
+                      >
+                        <span className="text-[10px] uppercase font-bold tracking-wider">{method.name}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-brand-orange flex items-center space-x-1">
-                    <span>USDT Blockchain Transaction Hash / TxID (Required)</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. 7f98e102f... (64-character hash)"
-                    value={refNo}
-                    onChange={(e) => setRefNo(e.target.value.trim())}
-                    className="w-full rounded bg-black/60 border border-white/10 px-3.5 py-2.5 text-xs text-white focus:border-brand-orange focus:outline-none font-mono"
-                  />
-                  <p className="text-[10px] text-gray-500 mt-1">Provide the 64-character Transaction Hash (TxID) to verify your transfer on the Tron blockchain explorer.</p>
-                </div>
-              </div>
+                {/* UPI QR Payment Detail Block */}
+                {paymentMethod === 'UPI' && (
+                  <div className="space-y-5 pt-3 border-t border-white/5">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 bg-brand-green/5 border border-brand-green/10 rounded-lg p-4">
+                      {/* Real QR code image */}
+                      <div className="flex-shrink-0 flex h-28 w-28 items-center justify-center rounded bg-white p-1">
+                        <img src="/images/upi_qr.png" alt="UPI QR Code" className="h-26 w-26 object-contain rounded" />
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <p className="font-bold text-white uppercase">Scan QR to pay via UPI</p>
+                        <p className="text-gray-400 font-mono">UPI ID: <span className="text-brand-green font-bold">vasigaming@upi</span></p>
+                        <p className="text-gray-400 font-mono">Name: <span className="text-white">SIVACHANDIRAN</span></p>
+                        <p className="text-[10px] text-gray-500 leading-relaxed">Please open GPay, PhonePe, Paytm, or BHIM, scan the QR code (or enter the UPI ID), and transfer the exact due amount.</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-brand-orange flex items-center space-x-1">
+                        <span>12-Digit UPI UTR Reference Number (Required)</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. 340918721642"
+                        pattern="[0-9]{12}"
+                        title="Please enter the exact 12-digit numeric UPI Transaction UTR ID"
+                        value={refNo}
+                        onChange={(e) => setRefNo(e.target.value.replace(/[^0-9]/g, ''))}
+                        className="w-full rounded bg-black/60 border border-white/10 px-3.5 py-2.5 text-xs text-white focus:border-brand-orange focus:outline-none font-mono"
+                      />
+                      <p className="text-[10px] text-gray-500 mt-1">Provide the UTR reference number from your receipt to automate confirmation matching.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* USDT QR Payment Detail Block */}
+                {paymentMethod === 'USDT' && (
+                  <div className="space-y-5 pt-3 border-t border-white/5">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 bg-brand-orange/5 border border-brand-orange/10 rounded-lg p-4">
+                      {/* Real Binance QR code image */}
+                      <div className="flex-shrink-0 flex h-28 w-28 items-center justify-center rounded bg-white p-1">
+                        <img src="/images/binance_qr.jpg" alt="Binance USDT QR Code" className="h-26 w-26 object-contain rounded" />
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <p className="font-bold text-white uppercase">USDT wallet transfer (TRC-20)</p>
+                        <p className="text-gray-400 font-mono text-[10px]">TRC20: <span className="text-brand-orange font-bold break-all">TBdhe3wiv1MrX3MFc1TouEcASzLzaRNzm6</span></p>
+                        <p className="text-[10px] text-gray-500 leading-relaxed">Ensure you transfer via Tron Network (TRC20). Transfer the exact USD equivalent to avoid verification delays.</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-brand-orange flex items-center space-x-1">
+                        <span>USDT Blockchain Transaction Hash / TxID (Required)</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. 7f98e102f... (64-character hash)"
+                        value={refNo}
+                        onChange={(e) => setRefNo(e.target.value.trim())}
+                        className="w-full rounded bg-black/60 border border-white/10 px-3.5 py-2.5 text-xs text-white focus:border-brand-orange focus:outline-none font-mono"
+                      />
+                      <p className="text-[10px] text-gray-500 mt-1">Provide the 64-character Transaction Hash (TxID) to verify your transfer on the Tron blockchain explorer.</p>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </form>
@@ -394,7 +416,7 @@ export default function CheckoutPage() {
             ) : (
               <>
                 <ShieldCheck className="h-4 w-4" />
-                <span>Authorize Payment</span>
+                <span>{total === 0 ? 'Claim Free Downloads' : 'Authorize Payment'}</span>
               </>
             )}
           </button>
