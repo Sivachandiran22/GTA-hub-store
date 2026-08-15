@@ -3,7 +3,9 @@
 import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Script from 'next/script';
 import { useCart, Product } from '@/context/CartContext';
+
 import { useAuth } from '@/context/AuthContext';
 import FormattedPrice from '@/components/formatted-price';
 import { 
@@ -55,6 +57,7 @@ interface ProductDetailsType extends Product {
   gallery: GalleryItem[];
   tags: Array<{ id: string; tagName: string }>;
   reviews: ReviewWithUser[];
+  model3dUrl?: string | null;
 }
 
 export default function ProductDetailPage({
@@ -72,6 +75,7 @@ export default function ProductDetailPage({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'description' | 'requirements' | 'installation'>('description');
   const [activeImage, setActiveImage] = useState<string>('');
+  const [show3d, setShow3d] = useState(false);
   
   // Review form states
   const [reviewRating, setReviewRating] = useState(5);
@@ -177,6 +181,13 @@ export default function ProductDetailPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-12">
+      {/* Script tag to load Google model-viewer */}
+      <Script 
+        src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js" 
+        type="module"
+        strategy="afterInteractive"
+      />
+
       {/* Back button */}
       <div>
         <Link href="/shop" className="inline-flex items-center space-x-1.5 text-xs text-gray-400 hover:text-white uppercase transition-colors">
@@ -190,14 +201,43 @@ export default function ProductDetailPage({
         {/* Gallery / Images (Left 2 cols) */}
         <div className="lg:col-span-2 space-y-4">
           <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black border border-white/5">
-            <img
-              src={activeImage}
-              alt={product.title}
-              className="h-full w-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop';
-              }}
-            />
+            {show3d && product.model3dUrl ? (
+              <model-viewer
+                src={product.model3dUrl}
+                camera-controls
+                auto-rotate
+                shadow-intensity="1.5"
+                exposure="0.85"
+                style={{ width: '100%', height: '100%', outline: 'none' }}
+              />
+            ) : (
+              <img
+                src={activeImage}
+                alt={product.title}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop';
+                }}
+              />
+            )}
+
+            {/* 3D toggle overlay button */}
+            {product.model3dUrl && (
+              <button
+                onClick={() => setShow3d(!show3d)}
+                className="absolute bottom-4 right-4 z-10 flex items-center space-x-2 rounded-full bg-black/85 hover:bg-black border border-brand-green/35 hover:border-brand-green px-4.5 py-2.5 text-xs font-black uppercase text-brand-green shadow-lg hover:shadow-brand-green/20 hover:scale-105 transition-all cursor-pointer"
+              >
+                {show3d ? (
+                  <>
+                    <span>📷 Show Static Image</span>
+                  </>
+                ) : (
+                  <>
+                    <span>📦 View in 3D Interactive</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Thumbnail selector */}

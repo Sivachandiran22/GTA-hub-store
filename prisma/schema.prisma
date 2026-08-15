@@ -43,6 +43,7 @@ model Product {
   longDescription    String
   price              Float
   salePrice          Float?
+  model3dUrl         String?
   categoryId         String
   category           Category         @relation(fields: [categoryId], references: [id])
   thumbnailUrl       String

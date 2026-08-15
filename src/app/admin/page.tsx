@@ -83,6 +83,7 @@ export default function AdminDashboard() {
   const [formIsFeatured, setFormIsFeatured] = useState(false);
   const [formIsFree, setFormIsFree] = useState(false);
   const [formGame, setFormGame] = useState('GTA5');
+  const [formModel3dUrl, setFormModel3dUrl] = useState('');
 
   // File upload state variables
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
@@ -259,6 +260,7 @@ export default function AdminDashboard() {
     setFormIsFree(p.isFree || false);
     setFormGame(p.game || 'GTA5');
     setFormZip(p.zipUrl || '');
+    setFormModel3dUrl(p.model3dUrl || '');
     
     setEditingSlug(p.slug);
     setActiveSubTab('add-product');
@@ -282,6 +284,7 @@ export default function AdminDashboard() {
     setFormIsFeatured(false);
     setFormIsFree(false);
     setFormGame('GTA5');
+    setFormModel3dUrl('');
     
     localStorage.removeItem('gta_hub_admin_draft');
     setFormSuccess(false);
@@ -313,6 +316,7 @@ export default function AdminDashboard() {
           longDescription: formLongDesc,
           price: targetPrice,
           salePrice: formSalePrice ? parseFloat(formSalePrice) : null,
+          model3dUrl: formModel3dUrl || null,
           categoryId: formCategory,
           thumbnailUrl: formThumbnail,
           version: formVersion,
@@ -352,6 +356,7 @@ export default function AdminDashboard() {
         setFormIsFeatured(false);
         setFormIsFree(false);
         setFormGame('GTA5');
+        setFormModel3dUrl('');
         
         // Refresh catalog lists
         const catRes = await fetch('/api/products');
@@ -690,6 +695,7 @@ export default function AdminDashboard() {
         if (draft.isFeatured !== undefined) setFormIsFeatured(draft.isFeatured);
         if (draft.isFree !== undefined) setFormIsFree(draft.isFree);
         if (draft.game) setFormGame(draft.game);
+        if (draft.model3dUrl) setFormModel3dUrl(draft.model3dUrl);
       }
     } catch (err) {
       console.error('Failed to restore draft from localStorage', err);
@@ -715,14 +721,15 @@ export default function AdminDashboard() {
         zip: formZip,
         isFeatured: formIsFeatured,
         isFree: formIsFree,
-        game: formGame
+        game: formGame,
+        model3dUrl: formModel3dUrl
       };
       localStorage.setItem('gta_hub_admin_draft', JSON.stringify(draft));
     }
   }, [
     formTitle, formSlug, formShortDesc, formLongDesc, formPrice, formSalePrice,
     formCategory, formThumbnail, formVersion, formSize, formRequirements, formGuide,
-    formZip, formIsFeatured, formIsFree, formGame
+    formZip, formIsFeatured, formIsFree, formGame, formModel3dUrl
   ]);
 
   // Auto-fetch file size when the ZIP URL is updated (e.g. pasted Google Drive / Dropbox link)
@@ -1159,7 +1166,7 @@ export default function AdminDashboard() {
 
                 {/* Metadata details (Thumbnail, Size, ZIP path) */}
                 {/* Metadata details (Thumbnail, Size, ZIP path) */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold uppercase text-gray-400">Thumbnail Cover Image</label>
                     <div className="flex items-center space-x-2">
@@ -1218,6 +1225,17 @@ export default function AdminDashboard() {
                         />
                       </label>
                     </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase text-gray-400">3D Preview Model (.glb) URL</label>
+                    <input
+                      type="text"
+                      placeholder="Paste link to .glb model"
+                      value={formModel3dUrl}
+                      onChange={(e) => setFormModel3dUrl(e.target.value)}
+                      className="w-full rounded bg-black/60 border border-white/10 px-3 py-2.5 text-[11px] text-white focus:border-brand-green focus:outline-none font-mono"
+                    />
                   </div>
                 </div>
 
@@ -1299,7 +1317,14 @@ export default function AdminDashboard() {
                       {manageProductsList.map((p) => (
                         <tr key={p.id} className="hover:bg-white/5">
                           <td className="p-4">
-                            <p className="font-bold text-white">{p.title}</p>
+                            <div className="flex items-center space-x-2">
+                              <p className="font-bold text-white">{p.title}</p>
+                              {p.model3dUrl && (
+                                <span className="bg-brand-green/20 text-brand-green text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded border border-brand-green/30 tracking-wider">
+                                  3D
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[10px] text-gray-500 mt-0.5 font-mono">{p.slug}</p>
                           </td>
                           <td className="p-4 uppercase font-bold text-gray-400 text-[10px]">

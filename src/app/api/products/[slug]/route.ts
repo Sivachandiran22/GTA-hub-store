@@ -111,6 +111,7 @@ export async function PATCH(
     if (body.longDescription !== undefined) data.longDescription = body.longDescription;
     if (body.price !== undefined) data.price = parseFloat(body.price);
     if (body.salePrice !== undefined) data.salePrice = body.salePrice ? parseFloat(body.salePrice) : null;
+    if (body.model3dUrl !== undefined) data.model3dUrl = body.model3dUrl || null;
     if (body.categoryId !== undefined) data.categoryId = body.categoryId;
     if (body.thumbnailUrl !== undefined) data.thumbnailUrl = body.thumbnailUrl;
     if (body.version !== undefined) data.version = body.version;
