@@ -70,9 +70,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">
             {product.category?.name || 'Asset'}
           </span>
-          <span className="text-[8px] bg-white/5 border border-white/5 px-1.5 py-0.5 rounded text-brand-green font-bold uppercase tracking-wide">
-            FiveM / SP
-          </span>
+          {product.game !== '3D_MODEL' && (
+            <span className="text-[8px] bg-white/5 border border-white/5 px-1.5 py-0.5 rounded text-brand-green font-bold uppercase tracking-wide">
+              FiveM / SP
+            </span>
+          )}
         </div>
         
         <Link href={`/product/${product.slug}`} className="mt-1">

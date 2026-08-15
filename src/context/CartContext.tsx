@@ -12,6 +12,8 @@ export interface Product {
   category: { name: string; slug: string };
   downloadSize?: string;
   version?: string;
+  game?: string;
+  model3dUrl?: string | null;
 }
 
 interface CartItem {
