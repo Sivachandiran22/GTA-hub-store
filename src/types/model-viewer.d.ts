@@ -8,6 +8,8 @@ declare module 'react' {
         'camera-controls'?: boolean;
         'auto-rotate'?: boolean;
         'shadow-intensity'?: string;
+        'shadow-softness'?: string;
+        'environment-image'?: string;
         exposure?: string;
         style?: React.CSSProperties;
       };

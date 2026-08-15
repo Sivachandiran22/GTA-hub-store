@@ -203,11 +203,13 @@ export default function ProductDetailPage({
           <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black border border-white/5">
             {show3d && product.model3dUrl ? (
               <model-viewer
-                src={product.model3dUrl}
+                src={`/api/proxy-model?url=${encodeURIComponent(product.model3dUrl)}`}
                 camera-controls
                 auto-rotate
                 shadow-intensity="1.5"
-                exposure="0.85"
+                shadow-softness="0.5"
+                exposure="1.0"
+                environment-image="neutral"
                 style={{ width: '100%', height: '100%', outline: 'none' }}
               />
             ) : (
