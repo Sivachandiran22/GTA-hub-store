@@ -93,8 +93,9 @@ export default function ProductDetailPage({
         if (res.ok && data.product) {
           setProduct(data.product);
           setActiveImage(data.product.thumbnailUrl);
+          setLoading(false); // Instantly render page modules to the user
 
-          // Fetch related products in the same category
+          // Fetch related products in the same category in the background
           const categorySlug = data.product.category.slug;
           const relatedRes = await fetch(`/api/products?category=${categorySlug}`);
           const relatedData = await relatedRes.json();
