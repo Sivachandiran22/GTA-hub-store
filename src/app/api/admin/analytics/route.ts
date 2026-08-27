@@ -31,6 +31,13 @@ export async function GET(request: Request) {
       include: {
         user: {
           select: { fullName: true, email: true }
+        },
+        orderItems: {
+          include: {
+            product: {
+              select: { title: true }
+            }
+          }
         }
       }
     });
@@ -67,7 +74,8 @@ export async function GET(request: Request) {
         paymentMethod: o.paymentMethod,
         paymentIntentId: o.paymentIntentId,
         rejectionReason: o.rejectionReason,
-        date: o.createdAt
+        date: o.createdAt,
+        items: o.orderItems.map(item => item.product.title)
       })),
       topProducts: topProducts.map(p => ({
         id: p.id,

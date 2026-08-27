@@ -35,6 +35,7 @@ interface RecentOrderType {
   paymentMethod?: string;
   paymentIntentId?: string | null;
   date: string;
+  items?: string[];
 }
 
 interface TopProductType {
@@ -930,6 +931,7 @@ export default function AdminDashboard() {
                             <th className="p-4">Customer</th>
                             <th className="p-4">Net Sum</th>
                             <th className="p-4">Gateway & Reference</th>
+                            <th className="p-4">Purchased Assets</th>
                             <th className="p-4">Status</th>
                             <th className="p-4 text-right">Actions</th>
                           </tr>
@@ -947,6 +949,19 @@ export default function AdminDashboard() {
                                 <p className="font-bold text-white text-xs uppercase">{o.paymentMethod || 'STRIPE'}</p>
                                 {o.paymentIntentId && (
                                   <p className="font-mono text-[11px] text-brand-orange mt-1 select-all font-semibold tracking-wider">{o.paymentIntentId}</p>
+                                )}
+                              </td>
+                              <td className="p-4 max-w-[200px]">
+                                {o.items && o.items.length > 0 ? (
+                                  <div className="space-y-0.5">
+                                    {o.items.map((item, idx) => (
+                                      <p key={idx} className="font-bold text-white line-clamp-1" title={item}>
+                                        {item}
+                                      </p>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-gray-500 italic">No assets</p>
                                 )}
                               </td>
                               <td className="p-4">
