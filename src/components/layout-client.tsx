@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
@@ -507,6 +507,21 @@ function Footer() {
 }
 
 export default function LayoutClient({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (!pathname) return;
+    if (pathname.startsWith('/api') || pathname.startsWith('/admin')) return;
+
+    fetch('/api/analytics/track', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ path: pathname }),
+    }).catch((err) => console.error('Failed to log page visit telemetry:', err));
+  }, [pathname]);
+
   return (
     <AuthProvider>
       <CartProvider>

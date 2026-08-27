@@ -179,3 +179,11 @@ model ChatMessage {
   message   String
   createdAt DateTime @default(now())
 }
+
+model VisitorLog {
+  id        String   @id @default(uuid())
+  ipHash    String
+  path      String
+  userAgent String?
+  createdAt DateTime @default(now())
+}

@@ -55,7 +55,9 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { user, isAuthenticated, isAdmin, token, loading: authLoading } = useAuth();
 
-  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'add-product' | 'manage-products' | 'chat-console'>('analytics');
+  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'visitor-analytics' | 'add-product' | 'manage-products' | 'chat-console'>('analytics');
+  const [visitorStats, setVisitorStats] = useState<any>(null);
+  const [visitorLoading, setVisitorLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<TelemetrySummary | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrderType[]>([]);
@@ -139,6 +141,30 @@ export default function AdminDashboard() {
       console.error('Failed to fetch chat messages:', err);
     }
   };
+
+  const fetchVisitorStats = async () => {
+    if (!token) return;
+    setVisitorLoading(true);
+    try {
+      const res = await fetch('/api/admin/analytics/visitors', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setVisitorStats(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch visitor stats:', err);
+    } finally {
+      setVisitorLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSubTab === 'visitor-analytics') {
+      fetchVisitorStats();
+    }
+  }, [activeSubTab]);
 
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -816,7 +842,17 @@ export default function AdminDashboard() {
                 : 'bg-white/5 text-gray-400 hover:text-white'
             }`}
           >
-            Analytics Console
+            Revenue Analytics
+          </button>
+          <button
+            onClick={() => setActiveSubTab('visitor-analytics')}
+            className={`rounded px-4 py-2 transition-all ${
+              activeSubTab === 'visitor-analytics'
+                ? 'bg-brand-green text-black'
+                : 'bg-white/5 text-gray-400 hover:text-white'
+            }`}
+          >
+            Visitor Analytics
           </button>
           <button
             onClick={() => setActiveSubTab('add-product')}
@@ -996,6 +1032,152 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Visitor Analytics Sub Tab */}
+          {activeSubTab === 'visitor-analytics' && (
+            <div className="space-y-8">
+              {visitorLoading || !visitorStats ? (
+                <div className="text-center py-12 text-xs text-gray-500 uppercase tracking-widest animate-pulse">
+                  Retrieving visitor registry telemetry...
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    {[
+                      { label: 'Total Page Views', value: visitorStats.totalPageViews, icon: Eye, color: 'text-brand-green' },
+                      { label: 'Unique Visitors', value: visitorStats.totalUniqueVisitors, icon: Users, color: 'text-brand-green' },
+                      { label: 'Views / Visitor Ratio', value: visitorStats.totalUniqueVisitors > 0 ? (visitorStats.totalPageViews / visitorStats.totalUniqueVisitors).toFixed(2) : '0.00', icon: BarChart3, color: 'text-brand-orange' },
+                      { label: 'Tracking Frequency', value: 'Live 7-Day', icon: ShieldAlert, color: 'text-brand-orange' },
+                    ].map((widget, idx) => (
+                      <div key={idx} className="rounded-lg bg-brand-card border border-white/5 p-6 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">{widget.label}</span>
+                          <widget.icon className={`h-4 w-4 ${widget.color}`} />
+                        </div>
+                        <p className="font-display text-2xl font-black text-white">{widget.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                    {/* Top Visited Pages (Left 2 cols) */}
+                    <div className="lg:col-span-2 space-y-4">
+                      <h2 className="font-display text-xs font-bold uppercase text-white tracking-widest border-b border-white/5 pb-2">
+                        Top Visited Paths (Most Hits)
+                      </h2>
+                      <div className="overflow-x-auto rounded-lg border border-white/5 bg-brand-card/45 text-xs">
+                        <table className="w-full border-collapse text-left">
+                          <thead>
+                            <tr className="border-b border-white/5 bg-black/40 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                              <th className="p-4">Route Path</th>
+                              <th className="p-4">Visitor hit count</th>
+                              <th className="p-4 text-right">Traffic Share</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {visitorStats.topPages.length > 0 ? (
+                              visitorStats.topPages.map((item: any, idx: number) => {
+                                const total = visitorStats.totalPageViews || 1;
+                                const pct = ((item.count / total) * 100).toFixed(1);
+                                return (
+                                  <tr key={idx} className="border-b border-white/5 last:border-0 hover:bg-white/5">
+                                    <td className="p-4 font-mono text-gray-300 select-all">{item.path}</td>
+                                    <td className="p-4 font-bold text-white">{item.count}</td>
+                                    <td className="p-4 text-right">
+                                      <div className="flex items-center justify-end space-x-2">
+                                        <span className="text-gray-400 font-bold">{pct}%</span>
+                                        <div className="w-16 bg-white/5 h-1.5 rounded-full overflow-hidden">
+                                          <div className="bg-brand-green h-full" style={{ width: `${pct}%` }} />
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            ) : (
+                              <tr>
+                                <td colSpan={3} className="p-4 text-center text-gray-500 uppercase tracking-widest py-8">
+                                  No route logs detected.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* 7-Day Traffic Stats (Right 1 col) */}
+                    <div className="space-y-4">
+                      <h2 className="font-display text-xs font-bold uppercase text-white tracking-widest border-b border-white/5 pb-2">
+                        7-Day Telemetry Chart
+                      </h2>
+                      <div className="rounded-lg border border-white/5 bg-brand-card/45 p-4 space-y-4 text-xs">
+                        {visitorStats.trafficHistory.map((day: any, idx: number) => {
+                          const maxViews = Math.max(...visitorStats.trafficHistory.map((d: any) => d.pageViews)) || 1;
+                          const fillPct = ((day.pageViews / maxViews) * 100).toFixed(0);
+                          return (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex justify-between text-[10px] text-gray-400">
+                                <span>{day.date}</span>
+                                <span className="font-bold text-brand-green">
+                                  {day.pageViews} views / {day.uniqueVisitors} unique
+                                </span>
+                              </div>
+                              <div className="w-full bg-white/5 h-2 rounded overflow-hidden">
+                                <div className="bg-brand-orange h-full rounded" style={{ width: `${fillPct}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent 10 Visitor Logs */}
+                  <div className="space-y-4">
+                    <h2 className="font-display text-xs font-bold uppercase text-white tracking-widest border-b border-white/5 pb-2">
+                      Recent Visitor Logs (Realtime Activity)
+                    </h2>
+                    <div className="overflow-x-auto rounded-lg border border-white/5 bg-brand-card/45 text-xs">
+                      <table className="w-full border-collapse text-left">
+                        <thead>
+                          <tr className="border-b border-white/5 bg-black/40 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            <th className="p-4">Time</th>
+                            <th className="p-4">Visitor Hashed IP</th>
+                            <th className="p-4">Path Route</th>
+                            <th className="p-4">User Agent Client</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {visitorStats.recentLogs.length > 0 ? (
+                            visitorStats.recentLogs.map((log: any, idx: number) => (
+                              <tr key={idx} className="border-b border-white/5 last:border-0 hover:bg-white/5">
+                                <td className="p-4 text-gray-400 font-mono">
+                                  {new Date(log.createdAt).toLocaleTimeString()}
+                                </td>
+                                <td className="p-4 font-mono text-gray-500 select-all">{log.ipHash}</td>
+                                <td className="p-4 font-mono text-white select-all">{log.path}</td>
+                                <td className="p-4 text-gray-400 font-sans truncate max-w-[250px]" title={log.userAgent}>
+                                  {log.userAgent}
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={4} className="p-4 text-center text-gray-500 uppercase tracking-widest py-8">
+                                No page hits recorded.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
